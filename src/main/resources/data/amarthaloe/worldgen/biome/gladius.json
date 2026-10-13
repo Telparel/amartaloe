@@ -9,7 +9,7 @@
     "water_fog_color": 2036745,
     "particle": {
       "options": { "type": "minecraft:ash" },
-      "probability": 0.02
+      "probability": 0.03
     }
   },
   "spawners": {
@@ -26,8 +26,14 @@
   "carvers": {},
   "features": [
     [], [], [], [], [], [], [], [],
-    [ "minecraft:basalt_pillar" ],
-    [ "minecraft:patch_fire", "minecraft:spring_lava" ],
+    [
+      "minecraft:basalt_pillar",
+      "amarthaloe:gladius_spike"
+    ],
+    [
+      "minecraft:patch_fire",
+      "minecraft:spring_lava"
+    ],
     []
   ]
 }
