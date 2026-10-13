@@ -18,7 +18,8 @@ public record SyncProfilePayload(
         String hair,
         String eyes,
         String distinctiveFeatures,
-        String backstory
+        String backstory,
+        boolean isFirstJoin
 ) implements CustomPacketPayload {
 
     public static final Type<SyncProfilePayload> TYPE =
@@ -35,6 +36,7 @@ public record SyncProfilePayload(
                 ByteBufCodecs.STRING_UTF8.encode(buf, p.eyes);
                 ByteBufCodecs.STRING_UTF8.encode(buf, p.distinctiveFeatures);
                 ByteBufCodecs.STRING_UTF8.encode(buf, p.backstory);
+                buf.writeBoolean(p.isFirstJoin);
             },
             buf -> new SyncProfilePayload(
                     ByteBufCodecs.STRING_UTF8.decode(buf),
@@ -45,7 +47,8 @@ public record SyncProfilePayload(
                     ByteBufCodecs.STRING_UTF8.decode(buf),
                     ByteBufCodecs.STRING_UTF8.decode(buf),
                     ByteBufCodecs.STRING_UTF8.decode(buf),
-                    ByteBufCodecs.STRING_UTF8.decode(buf)
+                    ByteBufCodecs.STRING_UTF8.decode(buf),
+                    buf.readBoolean()
             )
     );
 
