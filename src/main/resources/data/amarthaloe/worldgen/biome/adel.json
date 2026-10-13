@@ -27,6 +27,7 @@
   "features": [
     [], [], [], [], [], [], [], [], [],
     [
+      "minecraft:trees_jungle",
       "minecraft:trees_mangrove",
       "minecraft:patch_grass_jungle",
       "minecraft:vines"
