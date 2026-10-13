@@ -1,17 +1,12 @@
 package com.amarthaloe.mod.world;
 
-import com.amarthaloe.mod.AmarthaloeMod;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Holder;
-import net.minecraft.core.HolderGetter;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
 
-import java.util.List;
 import java.util.stream.Stream;
 
 public class AmarthaloeBiomeSource extends BiomeSource {
@@ -65,32 +60,37 @@ public class AmarthaloeBiomeSource extends BiomeSource {
 
     @Override
     public Holder<Biome> getNoiseBiome(int quartX, int quartY, int quartZ, Climate.Sampler sampler) {
-        // Преобразуем координаты четвертей биома в реальные координаты блоков (* 4)
         int blockX = quartX << 2;
         int blockZ = quartZ << 2;
 
-        double distSq = (double) blockX * blockX + (double) blockZ * blockZ;
+        // Волновой шум искривления границ (Domain Warping)
+        double warpX = Math.sin(blockZ * 0.003) * 180.0 + Math.cos(blockZ * 0.0008) * 320.0;
+        double warpZ = Math.cos(blockX * 0.003) * 180.0 + Math.sin(blockX * 0.0008) * 320.0;
+
+        double sampleX = blockX + warpX;
+        double sampleZ = blockZ + warpZ;
+
+        double distSq = sampleX * sampleX + sampleZ * sampleZ;
         double radius = Math.sqrt(distSq);
 
-        // 1. Центр: Исономия (радиус до 700 блоков)
-        if (radius <= 700.0) {
+        // 1. Центр: Исономия (радиус 2500 блоков)
+        if (radius <= 2500.0) {
             return isonomia;
         }
 
-        // 2. Внешнее кольцо: 6 секторов по 60 градусов (от -PI до +PI)
-        double angle = Math.atan2(blockZ, blockX); // от -π до π
-        if (angle < 0) angle += 2 * Math.PI;       // нормализация от 0 до 2π
+        // 2. Внешние 6 секторов (угол с шумом волны)
+        double angle = Math.atan2(sampleZ, sampleX);
+        if (angle < 0) angle += 2 * Math.PI;
 
-        // Секторы по 60 градусов (π / 3)
         int sector = (int) (angle / (Math.PI / 3.0)) % 6;
 
         return switch (sector) {
-            case 0 -> gladius;   // Восток / Степи
-            case 1 -> maris;     // Юго-восток / Океан
-            case 2 -> fulgort;   // Юго-запад / Горы
-            case 3 -> adel;      // Запад / Мангры
-            case 4 -> gnostera;  // Северо-запад / Топи
-            default -> caligo;   // Север / Ледяные пустоши
+            case 0 -> gladius;
+            case 1 -> maris;
+            case 2 -> fulgort;
+            case 3 -> adel;
+            case 4 -> gnostera;
+            default -> caligo;
         };
     }
 }
