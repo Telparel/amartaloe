@@ -53,13 +53,13 @@ public class AmarthaloeMenuScreen extends Screen {
         this.leftPos = (this.width - this.imageWidth) / 2;
         this.topPos = (this.height - this.imageHeight) / 2;
 
-        rebuildMenuWidgets();
+        buildTabs();
     }
 
-    private void rebuildMenuWidgets() {
+    private void buildTabs() {
         this.clearWidgets();
 
-        // 1. Верхние вкладки меню (Профиль, Фракции, Группа)
+        // Верхние вкладки меню (Профиль, Фракции, Группа)
         Tab[] tabs = Tab.values();
         int tabWidth = 70;
         int tabSpacing = 5;
@@ -69,37 +69,37 @@ public class AmarthaloeMenuScreen extends Screen {
         for (int i = 0; i < tabs.length; i++) {
             Tab tab = tabs[i];
             int x = tabStartX + i * (tabWidth + tabSpacing);
-            int y = this.topPos - 22;
+            int y = this.topPos - 24;
 
             Button tabBtn = Button.builder(Component.literal(tab.getTitle()), b -> {
                 this.currentTab = tab;
-                rebuildMenuWidgets();
+                buildTabs();
             }).bounds(x, y, tabWidth, 20).build();
 
             tabBtn.active = (this.currentTab != tab);
             this.addRenderableWidget(tabBtn);
         }
 
-        // 2. Стрелки переключения фракций на вкладке FACTIONS
+        // Интерактивные стрелки переключения фракций в верхней строке
         if (this.currentTab == Tab.FACTIONS) {
-            int arrowY = this.topPos + 18;
-            int arrowSize = 20;
+            int arrowY = this.topPos + 14;
+            int arrowSize = 16;
 
             this.prevFactionBtn = Button.builder(Component.literal("<"), b -> {
                 Faction[] factions = Faction.values();
                 this.currentFactionIndex = (this.currentFactionIndex - 1 + factions.length) % factions.length;
-            }).bounds(this.leftPos + 15, arrowY, arrowSize, arrowSize).build();
+            }).bounds(this.leftPos + 14, arrowY, arrowSize, arrowSize).build();
 
             this.nextFactionBtn = Button.builder(Component.literal(">"), b -> {
                 Faction[] factions = Faction.values();
                 this.currentFactionIndex = (this.currentFactionIndex + 1) % factions.length;
-            }).bounds(this.leftPos + this.imageWidth - 15 - arrowSize, arrowY, arrowSize, arrowSize).build();
+            }).bounds(this.leftPos + this.imageWidth - 14 - arrowSize, arrowY, arrowSize, arrowSize).build();
 
             this.addRenderableWidget(this.prevFactionBtn);
             this.addRenderableWidget(this.nextFactionBtn);
         }
 
-        // 3. Кнопка закрытия
+        // Кнопка закрытия внизу
         this.addRenderableWidget(Button.builder(Component.literal("Закрыть"), b -> this.onClose())
                 .bounds(this.leftPos + (this.imageWidth - 80) / 2, this.topPos + this.imageHeight - 24, 80, 20)
                 .build());
@@ -109,7 +109,7 @@ public class AmarthaloeMenuScreen extends Screen {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
 
-        // Основное окно
+        // Оригинальная рамка и фон меню
         guiGraphics.fill(this.leftPos - 1, this.topPos - 1, this.leftPos + this.imageWidth + 1, this.topPos + this.imageHeight + 1, 0xFF141210);
         guiGraphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth, this.topPos + this.imageHeight, 0xEE1A1715);
 
@@ -169,22 +169,23 @@ public class AmarthaloeMenuScreen extends Screen {
         Faction currentFaction = factions[this.currentFactionIndex];
 
         int centerX = this.leftPos + this.imageWidth / 2;
-        int contentY = this.topPos + 22;
+        int contentY = this.topPos + 18;
 
+        // Верхняя строка с названием фракции и бароном по центру между стрелочками
         Component loreName = currentFaction.getFullLoreName();
         g.drawString(this.font, loreName, centerX - this.font.width(loreName) / 2, contentY, 0xFFFFFF, false);
         contentY += 24;
 
+        // Репутация и ранг персонажа
         int rep = ClientFactionData.getReputation(currentFaction);
-        PlayerProfileData.Gender gender = ClientProfileData.gender != null 
-                ? ClientProfileData.gender 
-                : PlayerProfileData.Gender.MALE;
+        PlayerProfileData.Gender gender = ClientProfileData.gender != null ? ClientProfileData.gender : PlayerProfileData.Gender.MALE;
         Component rankComponent = FactionRank.getTitle(currentFaction, rep, gender);
 
         Component repComponent = Component.literal("§7Репутация: §f" + rep + " §8| §7Ранг: ").append(rankComponent);
         g.drawString(this.font, repComponent, centerX - this.font.width(repComponent) / 2, contentY, 0xFFFFFF, false);
         contentY += 18;
 
+        // Полоса прогресса до следующего тира репутации
         int barWidth = 140;
         int barHeight = 6;
         int barX = centerX - barWidth / 2;
@@ -202,7 +203,7 @@ public class AmarthaloeMenuScreen extends Screen {
         if (progress > 0) {
             g.fill(barX, contentY, barX + (int) (barWidth * progress), contentY + barHeight, 0xFFC7A762);
         }
-        contentY += 16;
+        contentY += 18;
 
         String patronText = "§8Покровитель сектора: §7" + currentFaction.getBaronTitle();
         g.drawString(this.font, patronText, centerX - this.font.width(patronText) / 2, contentY, 0xFFFFFF, false);
