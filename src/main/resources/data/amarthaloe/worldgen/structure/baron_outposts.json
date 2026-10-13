@@ -1,6 +1,12 @@
 {
   "type": "minecraft:jigsaw",
-  "biomes": "#amarthaloe:has_structure/baron_outposts",
+  "biomes": [
+    "amarthaloe:caligo",
+    "amarthaloe:gnostera",
+    "amarthaloe:gladius",
+    "amarthaloe:fulgort",
+    "amarthaloe:adel"
+  ],
   "step": "surface_structures",
   "spawn_overrides": {},
   "terrain_adaptation": "beard_box",
