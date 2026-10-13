@@ -8,31 +8,26 @@
     "water_color": 4140835,
     "water_fog_color": 2036745,
     "particle": {
-      "options": {
-        "type": "minecraft:ash"
-      },
+      "options": { "type": "minecraft:ash" },
       "probability": 0.02
     }
   },
-  "spawners": {},
+  "spawners": {
+    "creature": [
+      { "type": "minecraft:strider", "weight": 20, "minCount": 1, "maxCount": 3 }
+    ],
+    "monster": [
+      { "type": "minecraft:magma_cube", "weight": 35, "minCount": 2, "maxCount": 4 },
+      { "type": "minecraft:blaze", "weight": 15, "minCount": 1, "maxCount": 2 },
+      { "type": "minecraft:wither_skeleton", "weight": 12, "minCount": 1, "maxCount": 3 }
+    ]
+  },
   "spawn_costs": {},
   "carvers": {},
   "features": [
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [
-      "minecraft:basalt_pillar"
-    ],
-    [
-      "minecraft:patch_fire",
-      "minecraft:spring_lava"
-    ],
+    [], [], [], [], [], [], [], [],
+    [ "minecraft:basalt_pillar" ],
+    [ "minecraft:patch_fire", "minecraft:spring_lava" ],
     []
   ]
 }
