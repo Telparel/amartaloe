@@ -1,7 +1,9 @@
 package com.amarthaloe.mod.client;
 
+import com.amarthaloe.mod.client.gui.TutorialScreen;
 import com.amarthaloe.mod.network.SyncProfilePayload;
 import com.amarthaloe.mod.profile.PlayerProfileData;
+import net.minecraft.client.Minecraft;
 
 public class ClientProfileData {
     public static String rpName = "";
@@ -26,5 +28,15 @@ public class ClientProfileData {
         eyes = payload.eyes();
         distinctiveFeatures = payload.distinctiveFeatures();
         backstory = payload.backstory();
+
+        // Запуск приветственного баннера
+        WelcomeToastOverlay.trigger();
+
+        // Если это первый заход игрока — открываем обучающее окно
+        if (payload.isFirstJoin()) {
+            Minecraft.getInstance().tell(() -> {
+                Minecraft.getInstance().setScreen(new TutorialScreen());
+            });
+        }
     }
 }
