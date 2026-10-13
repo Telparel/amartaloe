@@ -1,0 +1,17 @@
+{
+  "type": "amarthaloe:amarthaloe_type",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "minecraft:overworld",
+    "biome_source": {
+      "type": "amarthaloe:radial_biomes",
+      "isonomia": "amarthaloe:isonomia",
+      "caligo": "amarthaloe:caligo",
+      "gnostera": "amarthaloe:gnostera",
+      "gladius": "amarthaloe:gladius",
+      "maris": "amarthaloe:maris",
+      "fulgort": "amarthaloe:fulgort",
+      "adel": "amarthaloe:adel"
+    }
+  }
+}
