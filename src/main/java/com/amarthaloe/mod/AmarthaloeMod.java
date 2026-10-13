@@ -4,12 +4,14 @@ import com.amarthaloe.mod.client.ClientFactionData;
 import com.amarthaloe.mod.client.FactionGuiOverlay;
 import com.amarthaloe.mod.client.PartyHudOverlay;
 import com.amarthaloe.mod.client.RankBannerOverlay;
+import com.amarthaloe.mod.client.WelcomeToastOverlay;
 import com.amarthaloe.mod.client.gui.AmarthaloeMenuScreen;
 import com.amarthaloe.mod.command.FactionCommands;
 import com.amarthaloe.mod.command.PartyCommands;
 import com.amarthaloe.mod.faction.Faction;
 import com.amarthaloe.mod.faction.FactionAttachments;
 import com.amarthaloe.mod.faction.PlayerFactionData;
+import com.amarthaloe.mod.network.CompleteTutorialPayload;
 import com.amarthaloe.mod.network.SyncFactionDataPayload;
 import com.amarthaloe.mod.network.SyncPartyPayload;
 import com.amarthaloe.mod.network.SyncProfilePayload;
@@ -83,6 +85,12 @@ public class AmarthaloeMod {
                 SyncPartyPayload.STREAM_CODEC,
                 SyncPartyPayload::handle
         );
+
+        registrar.playToServer(
+                CompleteTutorialPayload.TYPE,
+                CompleteTutorialPayload.STREAM_CODEC,
+                CompleteTutorialPayload::handle
+        );
     }
 
     @SubscribeEvent
@@ -91,7 +99,6 @@ public class AmarthaloeMod {
         PartyCommands.register(event.getDispatcher());
     }
 
-    // Запрет Friendly Fire между сопартийцами
     @SubscribeEvent
     public void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
         if (event.getEntity() instanceof ServerPlayer victim) {
@@ -139,6 +146,8 @@ public class AmarthaloeMod {
 
     public static void syncPlayerProfile(ServerPlayer player) {
         PlayerProfileData profile = player.getData(FactionAttachments.PROFILE_DATA);
+        boolean isFirst = !profile.hasSeenTutorial();
+
         PacketDistributor.sendToPlayer(player, new SyncProfilePayload(
                 profile.getRpName(),
                 profile.getGender().name(),
@@ -148,7 +157,8 @@ public class AmarthaloeMod {
                 profile.getHair(),
                 profile.getEyes(),
                 profile.getDistinctiveFeatures(),
-                profile.getBackstory()
+                profile.getBackstory(),
+                isFirst
         ));
     }
 
@@ -170,6 +180,11 @@ public class AmarthaloeMod {
                     VanillaGuiLayers.HOTBAR,
                     ResourceLocation.fromNamespaceAndPath(MODID, "party_hud_overlay"),
                     new PartyHudOverlay()
+            );
+            event.registerAbove(
+                    VanillaGuiLayers.CHAT,
+                    ResourceLocation.fromNamespaceAndPath(MODID, "welcome_toast_overlay"),
+                    new WelcomeToastOverlay()
             );
         }
 
@@ -204,6 +219,7 @@ public class AmarthaloeMod {
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Post event) {
             RankBannerOverlay.tick();
+            WelcomeToastOverlay.tick();
 
             if (FACTION_PREV_KEY != null && FACTION_PREV_KEY.consumeClick()) {
                 ClientFactionData.cycleLeft();
