@@ -28,7 +28,8 @@
     [], [], [], [], [], [], [], [],
     [
       "minecraft:basalt_pillar",
-      "amarthaloe:gladius_spike"
+      "amarthaloe:gladius_spike",
+      "amarthaloe:ore_gladius_core"
     ],
     [
       "minecraft:patch_fire",
