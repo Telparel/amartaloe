@@ -8,25 +8,26 @@
     "water_color": 4473924,
     "water_fog_color": 2236962
   },
-  "spawners": {},
+  "spawners": {
+    "creature": [
+      { "type": "minecraft:cat", "weight": 10, "minCount": 1, "maxCount": 3 },
+      { "type": "minecraft:wolf", "weight": 8, "minCount": 1, "maxCount": 4 }
+    ],
+    "ambient": [
+      { "type": "minecraft:bat", "weight": 15, "minCount": 1, "maxCount": 3 }
+    ],
+    "monster": [
+      { "type": "minecraft:pillager", "weight": 12, "minCount": 1, "maxCount": 3 },
+      { "type": "minecraft:zombie", "weight": 35, "minCount": 2, "maxCount": 4 },
+      { "type": "minecraft:skeleton", "weight": 25, "minCount": 1, "maxCount": 3 }
+    ]
+  },
   "spawn_costs": {},
   "carvers": {},
   "features": [
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [
-      "minecraft:forest_rock"
-    ],
-    [
-      "minecraft:patch_dead_bush",
-      "minecraft:patch_dead_bush_2"
-    ],
+    [], [], [], [], [], [], [], [],
+    [ "minecraft:forest_rock" ],
+    [ "minecraft:patch_dead_bush", "minecraft:patch_dead_bush_2" ],
     []
   ]
 }
