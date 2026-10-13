@@ -1,6 +1,7 @@
 package com.amarthaloe.mod.faction;
 
 import com.amarthaloe.mod.AmarthaloeMod;
+import com.amarthaloe.mod.profile.PlayerProfileData;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -15,6 +16,13 @@ public class FactionAttachments {
     public static final Supplier<AttachmentType<PlayerFactionData>> FACTION_DATA =
             ATTACHMENT_TYPES.register("faction_data", () ->
                     AttachmentType.serializable(PlayerFactionData::new)
+                            .copyOnDeath()
+                            .build()
+            );
+
+    public static final Supplier<AttachmentType<PlayerProfileData>> PROFILE_DATA =
+            ATTACHMENT_TYPES.register("profile_data", () ->
+                    AttachmentType.serializable(PlayerProfileData::new)
                             .copyOnDeath()
                             .build()
             );
