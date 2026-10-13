@@ -3,10 +3,13 @@ package com.amarthaloe.mod.command;
 import com.amarthaloe.mod.AmarthaloeMod;
 import com.amarthaloe.mod.faction.Faction;
 import com.amarthaloe.mod.faction.FactionAttachments;
+import com.amarthaloe.mod.faction.FactionRank;
 import com.amarthaloe.mod.faction.PlayerFactionData;
+import com.amarthaloe.mod.profile.PlayerProfileData;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -30,6 +33,21 @@ public class FactionCommands {
                     return 1;
                 })
             )
+            .then(Commands.literal("passport")
+                .executes(ctx -> {
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    showPassport(player, player);
+                    return 1;
+                })
+                .then(Commands.argument("target", EntityArgument.player())
+                    .executes(ctx -> {
+                        ServerPlayer viewer = ctx.getSource().getPlayerOrException();
+                        ServerPlayer target = EntityArgument.getPlayer(ctx, "target");
+                        showPassport(viewer, target);
+                        return 1;
+                    })
+                )
+            )
             .then(Commands.literal("add")
                 .requires(source -> source.hasPermission(2))
                 .then(Commands.argument("target", EntityArgument.player())
@@ -48,7 +66,7 @@ public class FactionCommands {
 
                                 PlayerFactionData data = player.getData(FactionAttachments.FACTION_DATA);
                                 data.addReputation(faction, amount);
-                                AmarthaloeMod.syncPlayer(player); // Мгновенное обновление GUI!
+                                AmarthaloeMod.syncPlayer(player);
 
                                 ctx.getSource().sendSuccess(() -> Component.literal("Репутация обновлена."), true);
                                 return 1;
@@ -58,5 +76,30 @@ public class FactionCommands {
                 )
             )
         );
+    }
+
+    private static void showPassport(ServerPlayer viewer, ServerPlayer target) {
+        PlayerProfileData profile = target.getData(FactionAttachments.PROFILE_DATA);
+        PlayerFactionData factionData = target.getData(FactionAttachments.FACTION_DATA);
+
+        String displayName = profile.getRpName().isBlank() ? target.getName().getString() : profile.getRpName();
+
+        viewer.sendSystemMessage(Component.literal("§6======= [ПАСПОРТ АМАРТАЛОЭ] ======="));
+        viewer.sendSystemMessage(Component.literal("§fИмя / Позывной: §e" + displayName));
+        viewer.sendSystemMessage(Component.literal("§fПол: §b" + profile.getGender().getDisplay()));
+        if (!profile.getSelectedTitle().isBlank()) {
+            viewer.sendSystemMessage(Component.literal("§fАктивный Титул: §6" + profile.getSelectedTitle()));
+        }
+        viewer.sendSystemMessage(Component.literal("§fВнешность: §7" + profile.getHeightWeight() + ", " + profile.getBuild() + " телосложение"));
+        viewer.sendSystemMessage(Component.literal("§fЧерты: §7волосы " + profile.getHair() + ", глаза " + profile.getEyes()));
+        viewer.sendSystemMessage(Component.literal("§fОсобые приметы: §c" + profile.getDistinctiveFeatures()));
+        viewer.sendSystemMessage(Component.literal("§fПредыстория: §o" + profile.getBackstory()));
+        viewer.sendSystemMessage(Component.literal("§6--- Репутация в ключевых землях ---"));
+        for (Faction f : Faction.values()) {
+            int rep = factionData.getReputation(f);
+            Component rank = FactionRank.getTitle(f, rep, profile.getGender());
+            viewer.sendSystemMessage(Component.literal("§8- ").append(f.getFormattedName()).append("§7: ").append(rank));
+        }
+        viewer.sendSystemMessage(Component.literal("§6=================================="));
     }
 }
