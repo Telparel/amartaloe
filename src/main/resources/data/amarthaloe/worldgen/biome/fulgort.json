@@ -26,7 +26,8 @@
     [], [], [], [], [], [], [], [],
     [
       "minecraft:forest_rock",
-      "amarthaloe:fulgort_crystal"
+      "amarthaloe:fulgort_crystal",
+      "amarthaloe:ore_fulgort_amethyst"
     ],
     [
       "minecraft:trees_windswept_hills",
