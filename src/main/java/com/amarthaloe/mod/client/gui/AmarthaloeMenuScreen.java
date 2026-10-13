@@ -270,4 +270,174 @@ public class AmarthaloeMenuScreen extends Screen {
         int outerRadius = 66;
         int centerRadius = 24;
 
-        g.renderOutline(centerX - outerRadius - 2, centerY - outerRadius - 2, (outerRadius + 2) * 2, (outerRadius + 2
+        g.renderOutline(centerX - outerRadius - 2, centerY - outerRadius - 2, (outerRadius + 2) * 2, (outerRadius + 2) * 2, 0xFF2A2D35);
+
+        // Отрисовка секторов
+        for (int r = outerRadius; r > centerRadius; r -= 3) {
+            for (int a = 0; a < 360; a += 8) {
+                double rad = Math.toRadians(a);
+                int px = (int) (centerX + Math.cos(rad) * r);
+                int py = (int) (centerY + Math.sin(rad) * r);
+
+                int sector = ((int) ((a + 30) % 360)) / 60;
+                Faction f = switch (sector) {
+                    case 0 -> Faction.GLADIUS;
+                    case 1 -> Faction.MARIS;
+                    case 2 -> Faction.FULGORT;
+                    case 3 -> Faction.ADEL;
+                    case 4 -> Faction.GNOSTERA;
+                    default -> Faction.CALIGO;
+                };
+
+                g.fill(px, py, px + 2, py + 2, getMapFactionColor(f));
+            }
+        }
+
+        // Центр (Исономия)
+        for (int r = centerRadius; r > 0; r -= 2) {
+            for (int a = 0; a < 360; a += 12) {
+                double rad = Math.toRadians(a);
+                int px = (int) (centerX + Math.cos(rad) * r);
+                int py = (int) (centerY + Math.sin(rad) * r);
+                g.fill(px, py, px + 2, py + 2, 0xFF5A616B);
+            }
+        }
+        g.renderOutline(centerX - centerRadius, centerY - centerRadius, centerRadius * 2, centerRadius * 2, 0xFF9EA7B0);
+
+        // Стороны света
+        g.drawString(this.font, "§8С", centerX - 2, centerY - outerRadius - 10, 0x888888, false);
+        g.drawString(this.font, "§8Ю", centerX - 2, centerY + outerRadius + 3, 0x888888, false);
+        g.drawString(this.font, "§8З", centerX - outerRadius - 10, centerY - 4, 0x888888, false);
+        g.drawString(this.font, "§8В", centerX + outerRadius + 3, centerY - 4, 0x888888, false);
+
+        double mouseRelX = mouseX - centerX;
+        double mouseRelY = mouseY - centerY;
+        double mouseDist = Math.sqrt(mouseRelX * mouseRelX + mouseRelY * mouseRelY);
+        Faction hoveredFaction = null;
+
+        if (mouseDist <= centerRadius) {
+            hoveredFaction = Faction.ISONOMIA;
+        } else if (mouseDist <= outerRadius) {
+            double angleDeg = Math.toDegrees(Math.atan2(mouseRelY, mouseRelX));
+            if (angleDeg < 0) angleDeg += 360;
+            int sector = ((int) ((angleDeg + 30) % 360)) / 60;
+            hoveredFaction = switch (sector) {
+                case 0 -> Faction.GLADIUS;
+                case 1 -> Faction.MARIS;
+                case 2 -> Faction.FULGORT;
+                case 3 -> Faction.ADEL;
+                case 4 -> Faction.GNOSTERA;
+                default -> Faction.CALIGO;
+            };
+        }
+
+        // Метка игрока
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.player.level().dimension().equals(AmarthaloeWorld.AMARTHALOE_LEVEL)) {
+            double worldScale = (double) outerRadius / 8000.0;
+            int pX = (int) (centerX + (mc.player.getX() * worldScale));
+            int pZ = (int) (centerY + (mc.player.getZ() * worldScale));
+            pX = Math.max(mapX + 2, Math.min(mapX + mapW - 4, pX));
+            pZ = Math.max(mapY + 2, Math.min(mapY + mapH - 24, pZ));
+
+            g.fill(pX - 2, pZ - 2, pX + 3, pZ + 3, 0xFFFFD700);
+            g.fill(pX - 1, pZ - 1, pX + 2, pZ + 2, 0xFFFFFFFF);
+            g.drawString(this.font, "§6Вы: §f[" + (int) mc.player.getX() + ", " + (int) mc.player.getZ() + "]", mapX + 6, mapY + 6, 0xFFFFFF, true);
+        } else {
+            g.drawString(this.font, "§7[Вне Амарталоэ]", mapX + 6, mapY + 6, 0x888888, false);
+        }
+
+        g.drawString(this.font, "§e[ЛКМ по региону — ТП]", mapX + mapW - 120, mapY + 6, 0xFFCC00, false);
+
+        // Информационная плашка снизу
+        g.fill(mapX + 2, mapY + mapH - 22, mapX + mapW - 2, mapY + mapH - 2, 0xFF14161B);
+        g.renderOutline(mapX + 2, mapY + mapH - 22, mapW - 4, 20, 0xFF2F323A);
+
+        if (hoveredFaction != null) {
+            int rep = ClientFactionData.getReputation(hoveredFaction);
+            String repFormatted = (rep >= 0 ? "§a+" : "§c") + rep;
+            Component info = hoveredFaction.getFullLoreName().copy().append(" §8| §f" + repFormatted + " §7(").append(FactionRank.getTitle(hoveredFaction, rep, tempGender)).append("§7)");
+            g.drawString(this.font, info, mapX + 6, mapY + mapH - 16, 0xFFFFFF, true);
+        } else {
+            g.drawString(this.font, "§8Нажмите на сектор карты для быстрой проверки...", mapX + 6, mapY + mapH - 16, 0x888888, false);
+        }
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (currentTab == Tab.MAP && button == 0) {
+            int guiLeft = (this.width - 360) / 2;
+            int guiTop = (this.height - 220) / 2;
+            int mapX = guiLeft + 112;
+            int mapY = guiTop + 28;
+            int mapW = 238;
+            int mapH = 184;
+
+            int centerX = mapX + (mapW / 2);
+            int centerY = mapY + (mapH / 2) - 8;
+            int outerRadius = 66;
+            int centerRadius = 24;
+
+            double mouseRelX = mouseX - centerX;
+            double mouseRelY = mouseY - centerY;
+            double mouseDist = Math.sqrt(mouseRelX * mouseRelX + mouseRelY * mouseRelY);
+
+            if (mouseDist <= centerRadius) {
+                // Телепортация в Исономию (Центр)
+                PacketDistributor.sendToServer(new TeleportToSectorPayload(0, 0));
+                this.onClose();
+                return true;
+            } else if (mouseDist <= outerRadius) {
+                double angleDeg = Math.toDegrees(Math.atan2(mouseRelY, mouseRelX));
+                if (angleDeg < 0) angleDeg += 360;
+                int sector = ((int) ((angleDeg + 30) % 360)) / 60;
+
+                int targetIdx = switch (sector) {
+                    case 0 -> 3; // Гладиус
+                    case 1 -> 4; // Марис
+                    case 2 -> 5; // Фульгорт
+                    case 3 -> 6; // Адэль
+                    case 4 -> 2; // Гностера
+                    default -> 1; // Калиго
+                };
+
+                int[] coords = SECTOR_TELEPORTS[targetIdx];
+                PacketDistributor.sendToServer(new TeleportToSectorPayload(coords[0], coords[1]));
+                this.onClose();
+                return true;
+            }
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private int getMapFactionColor(Faction faction) {
+        return switch (faction) {
+            case ISONOMIA -> 0xFF4A4E57;
+            case CALIGO -> 0xFF31788A;
+            case GNOSTERA -> 0xFF354E25;
+            case GLADIUS -> 0xFF8A301D;
+            case MARIS -> 0xFF1A3F63;
+            case FULGORT -> 0xFF8A711C;
+            case ADEL -> 0xFF165C52;
+        };
+    }
+
+    private void renderLabel(GuiGraphics g, String text, int x, int y) {
+        g.drawString(this.font, "§f" + text, x, y, 0xFFFFFF, true);
+    }
+
+    private String getTabTitle(Tab tab) {
+        return switch (tab) {
+            case PASSPORT -> "Личное Дело / Паспорт";
+            case TITLES -> "Заслуженные Титулы";
+            case MAP -> "Карта Мира";
+            case GROUPS -> "Отряды и Пати";
+            case SETTINGS -> "Параметры и HUD";
+        };
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
+}
