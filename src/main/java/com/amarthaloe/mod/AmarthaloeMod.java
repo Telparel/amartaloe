@@ -5,8 +5,6 @@ import com.amarthaloe.mod.client.PartyHudOverlay;
 import com.amarthaloe.mod.client.RankBannerOverlay;
 import com.amarthaloe.mod.client.WelcomeToastOverlay;
 import com.amarthaloe.mod.client.gui.AmarthaloeMenuScreen;
-import com.amarthaloe.mod.client.gui.TutorialScreen;
-import com.amarthaloe.mod.client.ClientProfileData;
 import com.amarthaloe.mod.command.FactionCommands;
 import com.amarthaloe.mod.command.PartyCommands;
 import com.amarthaloe.mod.faction.FactionAttachments;
@@ -49,26 +47,21 @@ public class AmarthaloeMod {
     public static final String MODID = "amarthaloe";
 
     public AmarthaloeMod(IEventBus modEventBus) {
-        // Регистрация вложений данных (Attachments) фракций и профилей
         FactionAttachments.ATTACHMENT_TYPES.register(modEventBus);
 
-        // Жизненный цикл мода
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::registerPayloads);
 
-        // Регистрация в глобальной шине событий NeoForge
         NeoForge.EVENT_BUS.register(this);
         NeoForge.EVENT_BUS.register(FactionVillagerEvents.class);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        // Общая инициализация
     }
 
     private void registerPayloads(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar(MODID).versioned("1.0.0");
 
-        // Регистрация сетевых пакетов (S2C и C2S)
         registrar.playToClient(
                 SyncFactionDataPayload.TYPE,
                 SyncFactionDataPayload.STREAM_CODEC,
@@ -102,25 +95,18 @@ public class AmarthaloeMod {
         );
     }
 
-    /**
-     * Статический метод синхронизации данных фракции игрока (вызывается из FactionCommands)
-     */
     public static void syncPlayer(ServerPlayer player) {
-        var factionData = player.getData(FactionAttachments.PLAYER_FACTION);
+        var factionData = player.getData(FactionAttachments.PLAYER_FACTION_DATA);
         PacketDistributor.sendToPlayer(player, new SyncFactionDataPayload(factionData));
     }
 
-    /**
-     * Статический метод синхронизации профиля игрока (вызывается из UpdateProfilePayload)
-     */
     public static void syncPlayerProfile(ServerPlayer player) {
-        var profileData = player.getData(FactionAttachments.PLAYER_PROFILE);
+        var profileData = player.getData(FactionAttachments.PLAYER_PROFILE_DATA);
         PacketDistributor.sendToPlayer(player, new SyncProfilePayload(profileData));
     }
 
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
-        // Регистрация команд фракций и групп
         FactionCommands.register(event.getDispatcher());
         PartyCommands.register(event.getDispatcher());
     }
@@ -131,7 +117,7 @@ public class AmarthaloeMod {
             syncPlayer(player);
             syncPlayerProfile(player);
 
-            var party = PartyManager.get().getParty(player.getUUID());
+            var party = PartyManager.getParty(player.getUUID(), player.server);
             if (party != null && !party.isEmpty()) {
                 PacketDistributor.sendToPlayer(player, new SyncPartyPayload(party));
             }
@@ -148,17 +134,12 @@ public class AmarthaloeMod {
 
     @SubscribeEvent
     public void onServerTick(ServerTickEvent.Post event) {
-        // Обновление таймеров приглашений в группу
-        PartyManager.get().tick();
+        PartyManager.tick();
     }
 
-    /**
-     * Клиентские события шины мода (MOD BUS)
-     */
     @EventBusSubscriber(modid = MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
 
-        // Горячая клавиша меню мода (M по умолчанию)
         public static final KeyMapping OPEN_MENU_KEY = new KeyMapping(
                 "key.amarthaloe.open_menu",
                 InputConstants.Type.KEYSYM,
@@ -182,7 +163,6 @@ public class AmarthaloeMod {
 
         @SubscribeEvent
         public static void registerGuiLayers(RegisterGuiLayersEvent event) {
-            // Регистрация только родных слоёв интерфейса мода
             event.registerAbove(VanillaGuiLayers.PLAYER_HEALTH, FACTION_HUD_LAYER, new FactionGuiOverlay());
             event.registerAbove(FACTION_HUD_LAYER, PARTY_HUD_LAYER, new PartyHudOverlay());
             event.registerAbove(PARTY_HUD_LAYER, RANK_BANNER_LAYER, new RankBannerOverlay());
@@ -190,9 +170,6 @@ public class AmarthaloeMod {
         }
     }
 
-    /**
-     * Клиентские события шины игры (GAME BUS)
-     */
     @EventBusSubscriber(modid = MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
     public static class ClientGameEvents {
 
@@ -203,7 +180,6 @@ public class AmarthaloeMod {
                 return;
             }
 
-            // Открытие меню мода или экрана создания/обучения
             if (ClientModEvents.OPEN_MENU_KEY.consumeClick()) {
                 mc.setScreen(new AmarthaloeMenuScreen());
             }
