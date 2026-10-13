@@ -64,7 +64,7 @@ public class AmarthaloeMod {
 
         registrar.playToClient(
                 SyncFactionDataPayload.TYPE,
-                SyncFactionDataPayload.STREAM_CODEC,
+                SyncFactionDataPayload.CODEC,
                 SyncFactionDataPayload::handle
         );
         registrar.playToClient(
@@ -96,12 +96,12 @@ public class AmarthaloeMod {
     }
 
     public static void syncPlayer(ServerPlayer player) {
-        var factionData = player.getData(FactionAttachments.PLAYER_FACTION_DATA);
+        var factionData = player.getData(FactionAttachments.PLAYER_FACTION);
         PacketDistributor.sendToPlayer(player, new SyncFactionDataPayload(factionData));
     }
 
     public static void syncPlayerProfile(ServerPlayer player) {
-        var profileData = player.getData(FactionAttachments.PLAYER_PROFILE_DATA);
+        var profileData = player.getData(FactionAttachments.PLAYER_PROFILE);
         PacketDistributor.sendToPlayer(player, new SyncProfilePayload(profileData));
     }
 
