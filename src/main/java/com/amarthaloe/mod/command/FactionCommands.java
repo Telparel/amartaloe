@@ -16,10 +16,27 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.npc.Villager;
 
 public class FactionCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("amarthaloe")
+            .then(Commands.literal("spawn_trader")
+                .requires(source -> source.hasPermission(2))
+                .executes(ctx -> {
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    ServerLevel level = player.serverLevel();
+                    Villager villager = EntityType.VILLAGER.create(level);
+                    if (villager != null) {
+                        villager.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), 0.0F);
+                        level.addFreshEntity(villager);
+                        ctx.getSource().sendSuccess(() -> Component.literal("§aИнтендант сектора успешно призван."), true);
+                        return 1;
+                    }
+                    return 0;
+                })
+            )
             .then(Commands.literal("tp")
                 .requires(source -> source.hasPermission(2))
                 .executes(ctx -> {
@@ -29,7 +46,7 @@ public class FactionCommands {
                         ctx.getSource().sendFailure(Component.literal("§cМир Амарталоэ не найден!"));
                         return 0;
                     }
-                    player.teleportTo(targetLevel, 0.5, 70.0, 0.5, player.getYRot(), player.getXRot());
+                    player.teleportTo(targetLevel, 0.5, 75.0, 0.5, player.getYRot(), player.getXRot());
                     ctx.getSource().sendSuccess(() -> Component.literal("§aВы перенеслись в сердце Амарталоэ — Исономию."), true);
                     return 1;
                 })
