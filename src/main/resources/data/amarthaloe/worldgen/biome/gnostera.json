@@ -10,19 +10,20 @@
     "grass_color": 5073950,
     "foliage_color": 4022040
   },
-  "spawners": {},
+  "spawners": {
+    "creature": [
+      { "type": "minecraft:frog", "weight": 20, "minCount": 2, "maxCount": 5 }
+    ],
+    "monster": [
+      { "type": "minecraft:slime", "weight": 40, "minCount": 2, "maxCount": 5 },
+      { "type": "minecraft:witch", "weight": 18, "minCount": 1, "maxCount": 2 },
+      { "type": "minecraft:drowned", "weight": 25, "minCount": 2, "maxCount": 4 }
+    ]
+  },
   "spawn_costs": {},
   "carvers": {},
   "features": [
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
+    [], [], [], [], [], [], [], [], [],
     [
       "minecraft:trees_swamp",
       "minecraft:patch_waterlily",
