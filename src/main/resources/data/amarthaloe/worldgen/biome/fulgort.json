@@ -12,6 +12,25 @@
   },
   "spawners": {},
   "spawn_costs": {},
-  "carvers": {},
-  "features": []
+  "carvers": {
+    "air": ["minecraft:cave", "minecraft:canyon"]
+  },
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "minecraft:trees_windswept_hills",
+      "minecraft:patch_grass_plain"
+    ],
+    [
+      "minecraft:freeze_top_layer"
+    ]
+  ]
 }
