@@ -3,31 +3,35 @@
   "temperature": 0.5,
   "downfall": 0.5,
   "effects": {
-    "sky_color": 2043450,
-    "fog_color": 1187125,
-    "water_color": 1588820,
-    "water_fog_color": 593970,
-    "grass_color": 4350550,
-    "foliage_color": 4350550
+    "sky_color": 8103167,
+    "fog_color": 6393087,
+    "water_color": 4159204,
+    "water_fog_color": 329007,
+    "grass_color": 4432244,
+    "foliage_color": 3907436
   },
   "spawners": {
     "water_creature": [
-      { "type": "minecraft:dolphin", "weight": 8, "minCount": 1, "maxCount": 2 },
-      { "type": "minecraft:glow_squid", "weight": 15, "minCount": 2, "maxCount": 4 }
+      { "type": "minecraft:dolphin", "weight": 10, "minCount": 1, "maxCount": 3 },
+      { "type": "minecraft:squid", "weight": 30, "minCount": 2, "maxCount": 6 }
     ],
     "water_ambient": [
-      { "type": "minecraft:cod", "weight": 30, "minCount": 4, "maxCount": 8 },
-      { "type": "minecraft:salmon", "weight": 20, "minCount": 3, "maxCount": 6 }
+      { "type": "minecraft:tropical_fish", "weight": 40, "minCount": 4, "maxCount": 8 }
     ],
     "monster": [
-      { "type": "minecraft:drowned", "weight": 40, "minCount": 2, "maxCount": 4 }
+      { "type": "minecraft:drowned", "weight": 40, "minCount": 2, "maxCount": 4 },
+      { "type": "minecraft:guardian", "weight": 15, "minCount": 1, "maxCount": 2 }
     ]
   },
   "spawn_costs": {},
   "carvers": {},
   "features": [
     [], [], [], [], [], [], [], [],
-    [ "minecraft:seagrass_deep", "minecraft:kelp_cold" ],
+    [
+      "amarthaloe:maris_spire",
+      "minecraft:seagrass_deep",
+      "minecraft:kelp_cold"
+    ],
     [],
     []
   ]
