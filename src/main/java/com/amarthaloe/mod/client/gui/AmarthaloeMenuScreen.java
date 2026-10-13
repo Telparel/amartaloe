@@ -6,6 +6,7 @@ import com.amarthaloe.mod.client.ClientProfileData;
 import com.amarthaloe.mod.faction.Faction;
 import com.amarthaloe.mod.faction.FactionRank;
 import com.amarthaloe.mod.party.PartyMemberData;
+import com.amarthaloe.mod.profile.PlayerProfileData;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -59,7 +60,7 @@ public class AmarthaloeMenuScreen extends Screen {
     private void rebuildMenuWidgets() {
         this.clearWidgets();
 
-        // 1. Верхние вкладки меню (только 3 вкладки: Профиль, Фракции, Группа)
+        // 1. Верхние вкладки меню (Профиль, Фракции, Группа)
         Tab[] tabs = Tab.values();
         int tabWidth = 70;
         int tabSpacing = 5;
@@ -107,7 +108,6 @@ public class AmarthaloeMenuScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        // Затемнение заднего фона
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
 
         // Основное окно
@@ -172,17 +172,21 @@ public class AmarthaloeMenuScreen extends Screen {
         int centerX = this.leftPos + this.imageWidth / 2;
         int contentY = this.topPos + 22;
 
-        // Название текущей фракции по центру
-        String factionTitle = "§6§l" + currentFaction.getName();
-        g.drawString(this.font, factionTitle, centerX - this.font.width(factionTitle) / 2, contentY, 0xFFFFFF, false);
+        // Название текущей фракции с титулом Барона
+        Component loreName = currentFaction.getFullLoreName();
+        g.drawString(this.font, loreName, centerX - this.font.width(loreName) / 2, contentY, 0xFFFFFF, false);
         contentY += 24;
 
-        // Репутация и ранг
+        // Репутация и ранг с учётом пола персонажа
         int rep = ClientFactionData.getReputation(currentFaction);
-        FactionRank rank = FactionRank.fromReputation(rep);
+        PlayerProfileData.Gender gender = PlayerProfileData.Gender.MALE;
+        if ("FEMALE".equalsIgnoreCase(ClientProfileData.gender) || "Женский".equalsIgnoreCase(ClientProfileData.gender)) {
+            gender = PlayerProfileData.Gender.FEMALE;
+        }
+        Component rankComponent = FactionRank.getTitle(currentFaction, rep, gender);
 
-        String repText = "§7Репутация: §f" + rep + " §8| §7Ранг: " + rank.getColor() + rank.getTitle();
-        g.drawString(this.font, repText, centerX - this.font.width(repText) / 2, contentY, 0xFFFFFF, false);
+        Component repComponent = Component.literal("§7Репутация: §f" + rep + " §8| §7Ранг: ").append(rankComponent);
+        g.drawString(this.font, repComponent, centerX - this.font.width(repComponent) / 2, contentY, 0xFFFFFF, false);
         contentY += 18;
 
         // Полоса прогресса репутации
@@ -193,18 +197,21 @@ public class AmarthaloeMenuScreen extends Screen {
         g.fill(barX - 1, contentY - 1, barX + barWidth + 1, contentY + barHeight + 1, 0xFF141210);
         g.fill(barX, contentY, barX + barWidth, contentY + barHeight, 0xFF2B2622);
 
-        float progress = Math.clamp((rep % 1000) / 1000.0f, 0.0f, 1.0f);
+        int prevTier = FactionRank.getPrevTierTarget(rep);
+        int nextTier = FactionRank.getNextTierTarget(rep);
+        float progress = 0.0f;
+        if (nextTier > prevTier) {
+            progress = Math.clamp((float) (rep - prevTier) / (nextTier - prevTier), 0.0f, 1.0f);
+        }
+
         if (progress > 0) {
             g.fill(barX, contentY, barX + (int) (barWidth * progress), contentY + barHeight, 0xFFC7A762);
         }
         contentY += 16;
 
-        // Описание фракции
-        List<net.minecraft.util.FormattedCharSequence> descLines = this.font.split(Component.literal("§7" + currentFaction.getDescription()), this.imageWidth - 40);
-        for (net.minecraft.util.FormattedCharSequence line : descLines) {
-            g.drawString(this.font, line, this.leftPos + 20, contentY, 0xFFFFFF, false);
-            contentY += 10;
-        }
+        // Подзаголовок покровителя
+        String patronText = "§8Покровитель сектора: §7" + currentFaction.getBaronTitle();
+        g.drawString(this.font, patronText, centerX - this.font.width(patronText) / 2, contentY, 0xFFFFFF, false);
     }
 
     private void renderPartyTab(GuiGraphics g) {
