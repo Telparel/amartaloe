@@ -29,7 +29,8 @@
     [], [], [], [], [], [], [], [],
     [
       "minecraft:ice_spike",
-      "minecraft:ice_patch"
+      "minecraft:ice_patch",
+      "amarthaloe:caligo_frost_spike"
     ],
     [
       "minecraft:trees_snowy"
