@@ -3,437 +3,233 @@ package com.amarthaloe.mod.client.gui;
 import com.amarthaloe.mod.client.ClientFactionData;
 import com.amarthaloe.mod.client.ClientPartyData;
 import com.amarthaloe.mod.client.ClientProfileData;
-import com.amarthaloe.mod.client.ModClientConfig;
 import com.amarthaloe.mod.faction.Faction;
 import com.amarthaloe.mod.faction.FactionRank;
-import com.amarthaloe.mod.network.TeleportToSectorPayload;
-import com.amarthaloe.mod.network.UpdateProfilePayload;
 import com.amarthaloe.mod.party.PartyMemberData;
-import com.amarthaloe.mod.profile.PlayerProfileData;
-import com.amarthaloe.mod.world.AmarthaloeWorld;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.neoforged.neoforge.network.PacketDistributor;
+
+import java.util.List;
 
 public class AmarthaloeMenuScreen extends Screen {
-    private enum Tab { PASSPORT, TITLES, MAP, GROUPS, SETTINGS }
-    private Tab currentTab = Tab.PASSPORT;
 
-    // Поля ввода для паспорта
-    private EditBox nameInput;
-    private EditBox heightWeightInput;
-    private EditBox buildInput;
-    private EditBox hairInput;
-    private EditBox eyesInput;
-    private EditBox featuresInput;
-    private EditBox backstoryInput;
+    public enum Tab {
+        PROFILE("Профиль"),
+        FACTIONS("Фракции"),
+        PARTY("Группа");
 
-    // Поле ввода для приглашения в группу
-    private EditBox partyInviteInput;
+        private final String title;
 
-    private PlayerProfileData.Gender tempGender = ClientProfileData.gender;
-    private String tempTitle = ClientProfileData.selectedTitle;
+        Tab(String title) {
+            this.title = title;
+        }
 
-    // Точки телепортации в каждый из 7 секторов
-    private static final int[][] SECTOR_TELEPORTS = {
-            {0, 0},         // 0: Исономия (Центр)
-            {0, -4500},     // 1: Калиго (Север)
-            {3800, -2200},  // 2: Гностера (Северо-восток)
-            {4500, 0},      // 3: Гладиус (Восток)
-            {2200, 3800},   // 4: Марис (Юго-восток)
-            {-2200, 3800},  // 5: Фульгорт (Юго-запад)
-            {-4500, 0}      // 6: Адэль (Запад)
-    };
+        public String getTitle() {
+            return title;
+        }
+    }
+
+    private Tab currentTab = Tab.PROFILE;
+    private int currentFactionIndex = 0;
+
+    private int leftPos;
+    private int topPos;
+    private final int imageWidth = 240;
+    private final int imageHeight = 170;
+
+    // Кнопки переключения фракций
+    private Button prevFactionBtn;
+    private Button nextFactionBtn;
 
     public AmarthaloeMenuScreen() {
-        super(Component.literal("Мир Амарталоэ"));
+        super(Component.literal("Меню Амарталоэ"));
     }
 
     @Override
     protected void init() {
-        int guiLeft = (this.width - 360) / 2;
-        int guiTop = (this.height - 220) / 2;
+        super.init();
+        this.leftPos = (this.width - this.imageWidth) / 2;
+        this.topPos = (this.height - this.imageHeight) / 2;
 
+        rebuildMenuWidgets();
+    }
+
+    private void rebuildMenuWidgets() {
         this.clearWidgets();
 
-        // --- БОКОВЫЕ ВКЛАДКИ (ТАБЫ) ---
-        int tabY = guiTop + 30;
-        int tabW = 90;
-        int tabH = 20;
+        // 1. Верхние вкладки меню (только 3 вкладки: Профиль, Фракции, Группа)
+        Tab[] tabs = Tab.values();
+        int tabWidth = 70;
+        int tabSpacing = 5;
+        int totalTabsWidth = (tabs.length * tabWidth) + ((tabs.length - 1) * tabSpacing);
+        int tabStartX = this.leftPos + (this.imageWidth - totalTabsWidth) / 2;
 
-        addRenderableWidget(Button.builder(Component.literal("Паспорт"), b -> switchTab(Tab.PASSPORT))
-                .bounds(guiLeft + 8, tabY, tabW, tabH).build());
-        addRenderableWidget(Button.builder(Component.literal("Титулы"), b -> switchTab(Tab.TITLES))
-                .bounds(guiLeft + 8, tabY + 24, tabW, tabH).build());
-        addRenderableWidget(Button.builder(Component.literal("Карта"), b -> switchTab(Tab.MAP))
-                .bounds(guiLeft + 8, tabY + 48, tabW, tabH).build());
-        addRenderableWidget(Button.builder(Component.literal("Группы"), b -> switchTab(Tab.GROUPS))
-                .bounds(guiLeft + 8, tabY + 72, tabW, tabH).build());
-        addRenderableWidget(Button.builder(Component.literal("Настройки"), b -> switchTab(Tab.SETTINGS))
-                .bounds(guiLeft + 8, tabY + 96, tabW, tabH).build());
+        for (int i = 0; i < tabs.length; i++) {
+            Tab tab = tabs[i];
+            int x = tabStartX + i * (tabWidth + tabSpacing);
+            int y = this.topPos - 22;
 
-        // --- ВКЛАДКА "ПАСПОРТ" ---
-        if (currentTab == Tab.PASSPORT) {
-            int inputX = guiLeft + 195;
-            int inputW = 150;
-            int startY = guiTop + 30;
+            Button tabBtn = Button.builder(Component.literal(tab.getTitle()), b -> {
+                this.currentTab = tab;
+                rebuildMenuWidgets();
+            }).bounds(x, y, tabWidth, 20).build();
 
-            nameInput = new EditBox(this.font, inputX, startY, inputW, 16, Component.literal("Имя"));
-            nameInput.setValue(ClientProfileData.rpName);
-            addRenderableWidget(nameInput);
-
-            addRenderableWidget(Button.builder(Component.literal("Пол: " + tempGender.getDisplay()), b -> {
-                tempGender = (tempGender == PlayerProfileData.Gender.MALE) ? PlayerProfileData.Gender.FEMALE : PlayerProfileData.Gender.MALE;
-                b.setMessage(Component.literal("Пол: " + tempGender.getDisplay()));
-            }).bounds(inputX, startY + 22, inputW, 18).build());
-
-            heightWeightInput = new EditBox(this.font, inputX, startY + 44, inputW, 16, Component.literal("Рост/Вес"));
-            heightWeightInput.setValue(ClientProfileData.heightWeight);
-            addRenderableWidget(heightWeightInput);
-
-            buildInput = new EditBox(this.font, inputX, startY + 64, inputW, 16, Component.literal("Телосложение"));
-            buildInput.setValue(ClientProfileData.build);
-            addRenderableWidget(buildInput);
-
-            hairInput = new EditBox(this.font, inputX, startY + 84, inputW, 16, Component.literal("Волосы"));
-            hairInput.setValue(ClientProfileData.hair);
-            addRenderableWidget(hairInput);
-
-            eyesInput = new EditBox(this.font, inputX, startY + 104, inputW, 16, Component.literal("Глаза"));
-            eyesInput.setValue(ClientProfileData.eyes);
-            addRenderableWidget(eyesInput);
-
-            featuresInput = new EditBox(this.font, inputX, startY + 124, inputW, 16, Component.literal("Приметы"));
-            featuresInput.setValue(ClientProfileData.distinctiveFeatures);
-            addRenderableWidget(featuresInput);
-
-            backstoryInput = new EditBox(this.font, inputX, startY + 144, inputW, 16, Component.literal("Квента"));
-            backstoryInput.setValue(ClientProfileData.backstory);
-            addRenderableWidget(backstoryInput);
-
-            addRenderableWidget(Button.builder(Component.literal("§aСохранить паспорт"), b -> saveProfile())
-                    .bounds(inputX, startY + 168, inputW, 20).build());
+            tabBtn.active = (this.currentTab != tab);
+            this.addRenderableWidget(tabBtn);
         }
 
-        // --- ВКЛАДКА "ТИТУЛЫ" ---
-        if (currentTab == Tab.TITLES) {
-            int titleListX = guiLeft + 115;
-            int titleListY = guiTop + 30;
+        // 2. Стрелки переключения фракций на вкладке FACTIONS
+        if (this.currentTab == Tab.FACTIONS) {
+            int arrowY = this.topPos + 18;
+            int arrowSize = 20;
 
-            Faction[] factions = Faction.values();
-            for (int i = 0; i < factions.length; i++) {
-                Faction f = factions[i];
-                int rep = ClientFactionData.getReputation(f);
-                Component rankComp = FactionRank.getTitle(f, rep, tempGender);
+            this.prevFactionBtn = Button.builder(Component.literal("<"), b -> {
+                Faction[] factions = Faction.values();
+                this.currentFactionIndex = (this.currentFactionIndex - 1 + factions.length) % factions.length;
+            }).bounds(this.leftPos + 15, arrowY, arrowSize, arrowSize).build();
 
-                int btnY = titleListY + (i * 22);
-                addRenderableWidget(Button.builder(Component.literal("Выбрать: ").append(rankComp), b -> {
-                    tempTitle = rankComp.getString();
-                    saveProfile();
-                }).bounds(titleListX, btnY, 230, 18).build());
-            }
+            this.nextFactionBtn = Button.builder(Component.literal(">"), b -> {
+                Faction[] factions = Faction.values();
+                this.currentFactionIndex = (this.currentFactionIndex + 1) % factions.length;
+            }).bounds(this.leftPos + this.imageWidth - 15 - arrowSize, arrowY, arrowSize, arrowSize).build();
+
+            this.addRenderableWidget(this.prevFactionBtn);
+            this.addRenderableWidget(this.nextFactionBtn);
         }
 
-        // --- ВКЛАДКА "ГРУППЫ" ---
-        if (currentTab == Tab.GROUPS) {
-            int startX = guiLeft + 115;
-            int startY = guiTop + 140;
-
-            partyInviteInput = new EditBox(this.font, startX, startY, 130, 18, Component.literal("Ник игрока"));
-            addRenderableWidget(partyInviteInput);
-
-            addRenderableWidget(Button.builder(Component.literal("§aПригласить"), b -> {
-                String target = partyInviteInput.getValue().trim();
-                if (!target.isEmpty() && Minecraft.getInstance().player != null) {
-                    Minecraft.getInstance().player.connection.sendCommand("party invite " + target);
-                    partyInviteInput.setValue("");
-                }
-            }).bounds(startX + 135, startY, 95, 18).build());
-
-            if (ClientPartyData.isInParty()) {
-                addRenderableWidget(Button.builder(Component.literal("§cПокинуть группу"), b -> {
-                    if (Minecraft.getInstance().player != null) {
-                        Minecraft.getInstance().player.connection.sendCommand("party leave");
-                    }
-                }).bounds(startX, startY + 24, 230, 18).build());
-            }
-        }
-
-        // --- ВКЛАДКА "НАСТРОЙКИ" ---
-        if (currentTab == Tab.SETTINGS) {
-            int startX = guiLeft + 115;
-            int startY = guiTop + 40;
-
-            addRenderableWidget(Button.builder(
-                    Component.literal("Позиция HUD группы: §e" + ModClientConfig.partyHudPosition.getDisplay()),
-                    b -> {
-                        ModClientConfig.cyclePartyHudPosition();
-                        b.setMessage(Component.literal("Позиция HUD группы: §e" + ModClientConfig.partyHudPosition.getDisplay()));
-                    }
-            ).bounds(startX, startY, 230, 20).build());
-        }
-    }
-
-    private void switchTab(Tab tab) {
-        this.currentTab = tab;
-        this.init();
-    }
-
-    private void saveProfile() {
-        if (nameInput != null) {
-            ClientProfileData.rpName = nameInput.getValue();
-            ClientProfileData.heightWeight = heightWeightInput.getValue();
-            ClientProfileData.build = buildInput.getValue();
-            ClientProfileData.hair = hairInput.getValue();
-            ClientProfileData.eyes = eyesInput.getValue();
-            ClientProfileData.distinctiveFeatures = featuresInput.getValue();
-            ClientProfileData.backstory = backstoryInput.getValue();
-        }
-        ClientProfileData.gender = tempGender;
-        ClientProfileData.selectedTitle = tempTitle;
-
-        PacketDistributor.sendToServer(new UpdateProfilePayload(
-                ClientProfileData.rpName,
-                ClientProfileData.gender.name(),
-                ClientProfileData.selectedTitle,
-                ClientProfileData.heightWeight,
-                ClientProfileData.build,
-                ClientProfileData.hair,
-                ClientProfileData.eyes,
-                ClientProfileData.distinctiveFeatures,
-                ClientProfileData.backstory
-        ));
+        // 3. Нижняя кнопка закрытия
+        this.addRenderableWidget(Button.builder(Component.literal("Закрыть"), b -> this.onClose())
+                .bounds(this.leftPos + (this.imageWidth - 80) / 2, this.topPos + this.imageHeight - 24, 80, 20)
+                .build());
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        super.render(g, mouseX, mouseY, partialTick);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // Затемнение заднего фона
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
 
-        int guiLeft = (this.width - 360) / 2;
-        int guiTop = (this.height - 220) / 2;
-        int guiW = 360;
-        int guiH = 220;
+        // Основное окно
+        guiGraphics.fill(this.leftPos - 1, this.topPos - 1, this.leftPos + this.imageWidth + 1, this.topPos + this.imageHeight + 1, 0xFF141210);
+        guiGraphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth, this.topPos + this.imageHeight, 0xEE1A1715);
 
-        g.fill(guiLeft, guiTop, guiLeft + guiW, guiTop + guiH, 0xFF141519);
-        g.renderOutline(guiLeft, guiTop, guiW, guiH, 0xFF525866);
-        g.renderOutline(guiLeft + 2, guiTop + 2, guiW - 4, guiH - 4, 0xFF24272E);
+        // Отрисовка контента активной вкладки
+        switch (this.currentTab) {
+            case PROFILE -> renderProfileTab(guiGraphics);
+            case FACTIONS -> renderFactionsTab(guiGraphics);
+            case PARTY -> renderPartyTab(guiGraphics);
+        }
 
-        g.fill(guiLeft + 4, guiTop + 4, guiLeft + 104, guiTop + guiH - 4, 0xFF1B1D22);
-        g.fill(guiLeft + 104, guiTop + 4, guiLeft + 106, guiTop + guiH - 4, 0xFF3E434D);
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    }
 
-        g.fill(guiLeft + 106, guiTop + 4, guiLeft + guiW - 4, guiTop + 24, 0xFF1F2228);
-        g.drawString(this.font, "§6АРХИВ АМАРТАЛОЭ §7» §f" + getTabTitle(currentTab), guiLeft + 114, guiTop + 9, 0xFFFFFF, true);
+    private void renderProfileTab(GuiGraphics g) {
+        int contentX = this.leftPos + 16;
+        int contentY = this.topPos + 16;
 
-        if (currentTab == Tab.PASSPORT) {
-            int labelX = guiLeft + 114;
-            int startY = guiTop + 34;
-            renderLabel(g, "Имя (RP):", labelX, startY);
-            renderLabel(g, "Пол:", labelX, startY + 24);
-            renderLabel(g, "Рост / Вес:", labelX, startY + 46);
-            renderLabel(g, "Телосложение:", labelX, startY + 66);
-            renderLabel(g, "Волосы:", labelX, startY + 86);
-            renderLabel(g, "Глаза:", labelX, startY + 106);
-            renderLabel(g, "Приметы:", labelX, startY + 126);
-            renderLabel(g, "Предыстория:", labelX, startY + 146);
-        } else if (currentTab == Tab.GROUPS) {
-            int startX = guiLeft + 114;
-            int startY = guiTop + 32;
-            g.drawString(this.font, "§6Состав группы (макс. 5 чел):", startX, startY, 0xFFFFFF, true);
+        g.drawString(this.font, "§6§lПРОФИЛЬ ПЕРСОНАЖА", contentX, contentY, 0xFFFFFF, false);
+        contentY += 16;
 
-            var members = ClientPartyData.getMembers();
-            if (members.isEmpty()) {
-                g.drawString(this.font, "§7Вы не состоите в группе.", startX, startY + 18, 0xAAAAAA, true);
-            } else {
-                for (int i = 0; i < members.size(); i++) {
-                    PartyMemberData m = members.get(i);
-                    String info = "§f" + (i + 1) + ". " + m.getName() + " §7(HP: " + (int) m.getHealth() + "/" + (int) m.getMaxHealth() + ") " + (m.getTitle().isEmpty() ? "" : "§6[" + m.getTitle() + "]");
-                    g.drawString(this.font, info, startX, startY + 16 + (i * 18), 0xFFFFFF, true);
-                }
-            }
-        } else if (currentTab == Tab.MAP) {
-            renderWorldMap(g, guiLeft + 112, guiTop + 28, 238, 184, mouseX, mouseY);
-        } else if (currentTab == Tab.SETTINGS) {
-            g.drawString(this.font, "§7Настройте положение индикаторов отряда под ваш экран.", guiLeft + 115, guiTop + 68, 0xAAAAAA, true);
+        String name = ClientProfileData.rpName.isEmpty() ? (this.minecraft.player != null ? this.minecraft.player.getName().getString() : "Неизвестный") : ClientProfileData.rpName;
+        g.drawString(this.font, "§7Имя: §f" + name, contentX, contentY, 0xFFFFFF, false);
+        contentY += 12;
+
+        g.drawString(this.font, "§7Пол: §f" + ClientProfileData.gender, contentX, contentY, 0xFFFFFF, false);
+        contentY += 12;
+
+        if (!ClientProfileData.selectedTitle.isEmpty()) {
+            g.drawString(this.font, "§7Титул: §e" + ClientProfileData.selectedTitle, contentX, contentY, 0xFFFFFF, false);
+            contentY += 12;
+        }
+
+        g.drawString(this.font, "§7Телосложение: §f" + ClientProfileData.build, contentX, contentY, 0xFFFFFF, false);
+        contentY += 12;
+
+        g.drawString(this.font, "§7Глаза / Волосы: §f" + ClientProfileData.eyes + " / " + ClientProfileData.hair, contentX, contentY, 0xFFFFFF, false);
+        contentY += 12;
+
+        g.drawString(this.font, "§7Особые приметы: §f" + ClientProfileData.distinctiveFeatures, contentX, contentY, 0xFFFFFF, false);
+        contentY += 14;
+
+        g.drawString(this.font, "§7Предыстория:", contentX, contentY, 0xFFFFFF, false);
+        contentY += 10;
+
+        List<net.minecraft.util.FormattedCharSequence> lines = this.font.split(Component.literal("§8" + ClientProfileData.backstory), this.imageWidth - 32);
+        for (int i = 0; i < Math.min(lines.size(), 4); i++) {
+            g.drawString(this.font, lines.get(i), contentX, contentY, 0xFFFFFF, false);
+            contentY += 9;
         }
     }
 
-    private void renderWorldMap(GuiGraphics g, int mapX, int mapY, int mapW, int mapH, int mouseX, int mouseY) {
-        g.fill(mapX, mapY, mapX + mapW, mapY + mapH, 0xFF0D0E11);
-        g.renderOutline(mapX, mapY, mapW, mapH, 0xFF353942);
-
-        int centerX = mapX + (mapW / 2);
-        int centerY = mapY + (mapH / 2) - 8;
-        int outerRadius = 66;
-        int centerRadius = 24;
-
-        g.renderOutline(centerX - outerRadius - 2, centerY - outerRadius - 2, (outerRadius + 2) * 2, (outerRadius + 2) * 2, 0xFF2A2D35);
-
-        // Отрисовка секторов
-        for (int r = outerRadius; r > centerRadius; r -= 3) {
-            for (int a = 0; a < 360; a += 8) {
-                double rad = Math.toRadians(a);
-                int px = (int) (centerX + Math.cos(rad) * r);
-                int py = (int) (centerY + Math.sin(rad) * r);
-
-                int sector = ((int) ((a + 30) % 360)) / 60;
-                Faction f = switch (sector) {
-                    case 0 -> Faction.GLADIUS;
-                    case 1 -> Faction.MARIS;
-                    case 2 -> Faction.FULGORT;
-                    case 3 -> Faction.ADEL;
-                    case 4 -> Faction.GNOSTERA;
-                    default -> Faction.CALIGO;
-                };
-
-                g.fill(px, py, px + 2, py + 2, getMapFactionColor(f));
-            }
+    private void renderFactionsTab(GuiGraphics g) {
+        Faction[] factions = Faction.values();
+        if (this.currentFactionIndex < 0 || this.currentFactionIndex >= factions.length) {
+            this.currentFactionIndex = 0;
         }
+        Faction currentFaction = factions[this.currentFactionIndex];
 
-        // Центр (Исономия)
-        for (int r = centerRadius; r > 0; r -= 2) {
-            for (int a = 0; a < 360; a += 12) {
-                double rad = Math.toRadians(a);
-                int px = (int) (centerX + Math.cos(rad) * r);
-                int py = (int) (centerY + Math.sin(rad) * r);
-                g.fill(px, py, px + 2, py + 2, 0xFF5A616B);
-            }
+        int centerX = this.leftPos + this.imageWidth / 2;
+        int contentY = this.topPos + 22;
+
+        // Название текущей фракции по центру
+        String factionTitle = "§6§l" + currentFaction.getName();
+        g.drawString(this.font, factionTitle, centerX - this.font.width(factionTitle) / 2, contentY, 0xFFFFFF, false);
+        contentY += 24;
+
+        // Репутация и ранг
+        int rep = ClientFactionData.getReputation(currentFaction);
+        FactionRank rank = FactionRank.fromReputation(rep);
+
+        String repText = "§7Репутация: §f" + rep + " §8| §7Ранг: " + rank.getColor() + rank.getTitle();
+        g.drawString(this.font, repText, centerX - this.font.width(repText) / 2, contentY, 0xFFFFFF, false);
+        contentY += 18;
+
+        // Полоса прогресса репутации
+        int barWidth = 140;
+        int barHeight = 6;
+        int barX = centerX - barWidth / 2;
+
+        g.fill(barX - 1, contentY - 1, barX + barWidth + 1, contentY + barHeight + 1, 0xFF141210);
+        g.fill(barX, contentY, barX + barWidth, contentY + barHeight, 0xFF2B2622);
+
+        float progress = Math.clamp((rep % 1000) / 1000.0f, 0.0f, 1.0f);
+        if (progress > 0) {
+            g.fill(barX, contentY, barX + (int) (barWidth * progress), contentY + barHeight, 0xFFC7A762);
         }
-        g.renderOutline(centerX - centerRadius, centerY - centerRadius, centerRadius * 2, centerRadius * 2, 0xFF9EA7B0);
+        contentY += 16;
 
-        // Стороны света
-        g.drawString(this.font, "§8С", centerX - 2, centerY - outerRadius - 10, 0x888888, false);
-        g.drawString(this.font, "§8Ю", centerX - 2, centerY + outerRadius + 3, 0x888888, false);
-        g.drawString(this.font, "§8З", centerX - outerRadius - 10, centerY - 4, 0x888888, false);
-        g.drawString(this.font, "§8В", centerX + outerRadius + 3, centerY - 4, 0x888888, false);
-
-        double mouseRelX = mouseX - centerX;
-        double mouseRelY = mouseY - centerY;
-        double mouseDist = Math.sqrt(mouseRelX * mouseRelX + mouseRelY * mouseRelY);
-        Faction hoveredFaction = null;
-
-        if (mouseDist <= centerRadius) {
-            hoveredFaction = Faction.ISONOMIA;
-        } else if (mouseDist <= outerRadius) {
-            double angleDeg = Math.toDegrees(Math.atan2(mouseRelY, mouseRelX));
-            if (angleDeg < 0) angleDeg += 360;
-            int sector = ((int) ((angleDeg + 30) % 360)) / 60;
-            hoveredFaction = switch (sector) {
-                case 0 -> Faction.GLADIUS;
-                case 1 -> Faction.MARIS;
-                case 2 -> Faction.FULGORT;
-                case 3 -> Faction.ADEL;
-                case 4 -> Faction.GNOSTERA;
-                default -> Faction.CALIGO;
-            };
-        }
-
-        // Метка игрока
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null && mc.player.level().dimension().equals(AmarthaloeWorld.AMARTHALOE_LEVEL)) {
-            double worldScale = (double) outerRadius / 8000.0;
-            int pX = (int) (centerX + (mc.player.getX() * worldScale));
-            int pZ = (int) (centerY + (mc.player.getZ() * worldScale));
-            pX = Math.max(mapX + 2, Math.min(mapX + mapW - 4, pX));
-            pZ = Math.max(mapY + 2, Math.min(mapY + mapH - 24, pZ));
-
-            g.fill(pX - 2, pZ - 2, pX + 3, pZ + 3, 0xFFFFD700);
-            g.fill(pX - 1, pZ - 1, pX + 2, pZ + 2, 0xFFFFFFFF);
-            g.drawString(this.font, "§6Вы: §f[" + (int) mc.player.getX() + ", " + (int) mc.player.getZ() + "]", mapX + 6, mapY + 6, 0xFFFFFF, true);
-        } else {
-            g.drawString(this.font, "§7[Вне Амарталоэ]", mapX + 6, mapY + 6, 0x888888, false);
-        }
-
-        g.drawString(this.font, "§e[ЛКМ по региону — ТП]", mapX + mapW - 120, mapY + 6, 0xFFCC00, false);
-
-        // Информационная плашка снизу
-        g.fill(mapX + 2, mapY + mapH - 22, mapX + mapW - 2, mapY + mapH - 2, 0xFF14161B);
-        g.renderOutline(mapX + 2, mapY + mapH - 22, mapW - 4, 20, 0xFF2F323A);
-
-        if (hoveredFaction != null) {
-            int rep = ClientFactionData.getReputation(hoveredFaction);
-            String repFormatted = (rep >= 0 ? "§a+" : "§c") + rep;
-            Component info = hoveredFaction.getFullLoreName().copy().append(" §8| §f" + repFormatted + " §7(").append(FactionRank.getTitle(hoveredFaction, rep, tempGender)).append("§7)");
-            g.drawString(this.font, info, mapX + 6, mapY + mapH - 16, 0xFFFFFF, true);
-        } else {
-            g.drawString(this.font, "§8Нажмите на сектор карты для быстрой проверки...", mapX + 6, mapY + mapH - 16, 0x888888, false);
+        // Описание фракции
+        List<net.minecraft.util.FormattedCharSequence> descLines = this.font.split(Component.literal("§7" + currentFaction.getDescription()), this.imageWidth - 40);
+        for (net.minecraft.util.FormattedCharSequence line : descLines) {
+            g.drawString(this.font, line, this.leftPos + 20, contentY, 0xFFFFFF, false);
+            contentY += 10;
         }
     }
 
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (currentTab == Tab.MAP && button == 0) {
-            int guiLeft = (this.width - 360) / 2;
-            int guiTop = (this.height - 220) / 2;
-            int mapX = guiLeft + 112;
-            int mapY = guiTop + 28;
-            int mapW = 238;
-            int mapH = 184;
+    private void renderPartyTab(GuiGraphics g) {
+        int contentX = this.leftPos + 16;
+        int contentY = this.topPos + 16;
 
-            int centerX = mapX + (mapW / 2);
-            int centerY = mapY + (mapH / 2) - 8;
-            int outerRadius = 66;
-            int centerRadius = 24;
+        g.drawString(this.font, "§6§lСОСТАВ ГРУППЫ", contentX, contentY, 0xFFFFFF, false);
+        contentY += 18;
 
-            double mouseRelX = mouseX - centerX;
-            double mouseRelY = mouseY - centerY;
-            double mouseDist = Math.sqrt(mouseRelX * mouseRelX + mouseRelY * mouseRelY);
-
-            if (mouseDist <= centerRadius) {
-                // Телепортация в Исономию (Центр)
-                PacketDistributor.sendToServer(new TeleportToSectorPayload(0, 0));
-                this.onClose();
-                return true;
-            } else if (mouseDist <= outerRadius) {
-                double angleDeg = Math.toDegrees(Math.atan2(mouseRelY, mouseRelX));
-                if (angleDeg < 0) angleDeg += 360;
-                int sector = ((int) ((angleDeg + 30) % 360)) / 60;
-
-                int targetIdx = switch (sector) {
-                    case 0 -> 3; // Гладиус
-                    case 1 -> 4; // Марис
-                    case 2 -> 5; // Фульгорт
-                    case 3 -> 6; // Адэль
-                    case 4 -> 2; // Гностера
-                    default -> 1; // Калиго
-                };
-
-                int[] coords = SECTOR_TELEPORTS[targetIdx];
-                PacketDistributor.sendToServer(new TeleportToSectorPayload(coords[0], coords[1]));
-                this.onClose();
-                return true;
-            }
+        List<PartyMemberData> members = ClientPartyData.getMembers();
+        if (members == null || members.isEmpty()) {
+            g.drawString(this.font, "§8Вы не состоите в группе.", contentX, contentY, 0xFFFFFF, false);
+            contentY += 12;
+            g.drawString(this.font, "§7Используйте §f/party invite <игрок>§7,", contentX, contentY, 0xFFFFFF, false);
+            contentY += 10;
+            g.drawString(this.font, "§7чтобы собрать отряд союзников.", contentX, contentY, 0xFFFFFF, false);
+            return;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
 
-    private int getMapFactionColor(Faction faction) {
-        return switch (faction) {
-            case ISONOMIA -> 0xFF4A4E57;
-            case CALIGO -> 0xFF31788A;
-            case GNOSTERA -> 0xFF354E25;
-            case GLADIUS -> 0xFF8A301D;
-            case MARIS -> 0xFF1A3F63;
-            case FULGORT -> 0xFF8A711C;
-            case ADEL -> 0xFF165C52;
-        };
-    }
-
-    private void renderLabel(GuiGraphics g, String text, int x, int y) {
-        g.drawString(this.font, "§f" + text, x, y, 0xFFFFFF, true);
-    }
-
-    private String getTabTitle(Tab tab) {
-        return switch (tab) {
-            case PASSPORT -> "Личное Дело / Паспорт";
-            case TITLES -> "Заслуженные Титулы";
-            case MAP -> "Карта Мира";
-            case GROUPS -> "Отряды и Пати";
-            case SETTINGS -> "Параметры и HUD";
-        };
+        for (int i = 0; i < members.size(); i++) {
+            PartyMemberData m = members.get(i);
+            String info = "§f" + (i + 1) + ". " + m.getName() + " §7(HP: " + (int) m.getHealth() + "/" + (int) m.getMaxHealth() + ") " + (m.getTitle().isEmpty() ? "" : "§6[" + m.getTitle() + "]");
+            g.drawString(this.font, info, contentX, contentY, 0xFFFFFF, false);
+            contentY += 12;
+        }
     }
 
     @Override
