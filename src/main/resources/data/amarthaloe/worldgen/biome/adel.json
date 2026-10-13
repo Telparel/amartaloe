@@ -10,19 +10,22 @@
     "grass_color": 3959860,
     "foliage_color": 3037230
   },
-  "spawners": {},
+  "spawners": {
+    "creature": [
+      { "type": "minecraft:parrot", "weight": 25, "minCount": 2, "maxCount": 4 },
+      { "type": "minecraft:ocelot", "weight": 15, "minCount": 1, "maxCount": 2 },
+      { "type": "minecraft:frog", "weight": 10, "minCount": 1, "maxCount": 3 }
+    ],
+    "monster": [
+      { "type": "minecraft:spider", "weight": 35, "minCount": 2, "maxCount": 4 },
+      { "type": "minecraft:cave_spider", "weight": 20, "minCount": 1, "maxCount": 3 },
+      { "type": "minecraft:creeper", "weight": 20, "minCount": 1, "maxCount": 2 }
+    ]
+  },
   "spawn_costs": {},
   "carvers": {},
   "features": [
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
+    [], [], [], [], [], [], [], [], [],
     [
       "minecraft:trees_mangrove",
       "minecraft:patch_grass_jungle",
