@@ -1,6 +1,6 @@
 {
   "type": "minecraft:jigsaw",
-  "biomes": "#amarthaloe:has_structure/isonomia_ruins",
+  "biomes": "amarthaloe:isonomia",
   "step": "surface_structures",
   "spawn_overrides": {},
   "terrain_adaptation": "beard_thin",
