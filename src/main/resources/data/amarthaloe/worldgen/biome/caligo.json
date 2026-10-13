@@ -8,33 +8,27 @@
     "water_color": 4159380,
     "water_fog_color": 329689,
     "particle": {
-      "options": {
-        "type": "minecraft:snowflake"
-      },
+      "options": { "type": "minecraft:snowflake" },
       "probability": 0.02
     }
   },
-  "spawners": {},
+  "spawners": {
+    "creature": [
+      { "type": "minecraft:polar_bear", "weight": 12, "minCount": 1, "maxCount": 2 },
+      { "type": "minecraft:fox", "weight": 15, "minCount": 2, "maxCount": 4 },
+      { "type": "minecraft:rabbit", "weight": 10, "minCount": 2, "maxCount": 4 }
+    ],
+    "monster": [
+      { "type": "minecraft:stray", "weight": 40, "minCount": 2, "maxCount": 4 },
+      { "type": "minecraft:skeleton", "weight": 20, "minCount": 1, "maxCount": 3 }
+    ]
+  },
   "spawn_costs": {},
   "carvers": {},
   "features": [
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [
-      "minecraft:ice_spike",
-      "minecraft:ice_patch"
-    ],
-    [
-      "minecraft:trees_snowy"
-    ],
-    [
-      "minecraft:freeze_top_layer"
-    ]
+    [], [], [], [], [], [], [], [],
+    [ "minecraft:ice_spike", "minecraft:ice_patch" ],
+    [ "minecraft:trees_snowy" ],
+    [ "minecraft:freeze_top_layer" ]
   ]
 }
