@@ -97,7 +97,7 @@ public class AmarthaloeMod {
 
     public static void syncPlayer(ServerPlayer player) {
         var factionData = player.getData(FactionAttachments.FACTION_DATA);
-        PacketDistributor.sendToPlayer(player, new SyncFactionDataPayload(factionData.getAllReputations()));
+        PacketDistributor.sendToPlayer(player, new SyncFactionDataPayload(factionData.getAlignments()));
     }
 
     public static void syncPlayerProfile(ServerPlayer player) {
