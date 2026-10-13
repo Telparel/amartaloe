@@ -18,11 +18,15 @@ import com.amarthaloe.mod.network.SyncProfilePayload;
 import com.amarthaloe.mod.network.UpdateProfilePayload;
 import com.amarthaloe.mod.party.PartyManager;
 import com.amarthaloe.mod.profile.PlayerProfileData;
+import com.amarthaloe.mod.world.AmarthaloeBiomeSource;
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.biome.BiomeSource;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -40,6 +44,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.EnumMap;
@@ -52,10 +57,15 @@ public class AmarthaloeMod {
     public static KeyMapping FACTION_NEXT_KEY;
     public static KeyMapping MENU_KEY;
 
+    public static final DeferredRegister<MapCodec<? extends BiomeSource>> BIOME_SOURCES =
+            DeferredRegister.create(Registries.BIOME_SOURCE, MODID);
+
     public AmarthaloeMod(IEventBus modEventBus) {
         FactionAttachments.register(modEventBus);
-        modEventBus.addListener(this::registerPayloads);
+        BIOME_SOURCES.register("radial_biomes", () -> AmarthaloeBiomeSource.CODEC);
+        BIOME_SOURCES.register(modEventBus);
 
+        modEventBus.addListener(this::registerPayloads);
         NeoForge.EVENT_BUS.register(this);
     }
 
