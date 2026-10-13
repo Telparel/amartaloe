@@ -9,7 +9,7 @@
     "water_fog_color": 329689,
     "particle": {
       "options": { "type": "minecraft:snowflake" },
-      "probability": 0.02
+      "probability": 0.04
     }
   },
   "spawners": {
@@ -27,8 +27,15 @@
   "carvers": {},
   "features": [
     [], [], [], [], [], [], [], [],
-    [ "minecraft:ice_spike", "minecraft:ice_patch" ],
-    [ "minecraft:trees_snowy" ],
-    [ "minecraft:freeze_top_layer" ]
+    [
+      "minecraft:ice_spike",
+      "minecraft:ice_patch"
+    ],
+    [
+      "minecraft:trees_snowy"
+    ],
+    [
+      "minecraft:freeze_top_layer"
+    ]
   ]
 }
