@@ -6,6 +6,20 @@ import net.minecraft.network.chat.Component;
 public class FactionRank {
     public static final int[] TIERS = {-1000, -500, -100, -50, -10, 0, 10, 50, 100, 500, 1000};
 
+    public static int getTierIndex(int rep) {
+        if (rep >= 1000) return 5;
+        if (rep >= 500)  return 4;
+        if (rep >= 100)  return 3;
+        if (rep >= 50)   return 2;
+        if (rep >= 10)   return 1;
+        if (rep > -10)   return 0;
+        if (rep > -50)   return -1;
+        if (rep > -100)  return -2;
+        if (rep > -500)  return -3;
+        if (rep > -1000) return -4;
+        return -5;
+    }
+
     public static Component getTitle(Faction faction, int rep) {
         if (rep >= 1000) return Component.literal("Легенда").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
         if (rep >= 500)  return Component.literal("Герой").withStyle(ChatFormatting.YELLOW);
