@@ -131,7 +131,10 @@ public class FactionRank {
         };
 
         boolean bold = (tier == 5 || tier <= -4);
-        return Component.literal(titleStr).withStyle(bold ? color.copy().applyFormat(ChatFormatting.BOLD) : color);
+            if (bold) {
+                return Component.literal(titleStr).withStyle(color, ChatFormatting.BOLD);
+            }
+            return Component.literal(titleStr).withStyle(color);
     }
 
     public static int getNextTierTarget(int rep) {
