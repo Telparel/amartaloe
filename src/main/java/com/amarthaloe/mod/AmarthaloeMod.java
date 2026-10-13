@@ -2,6 +2,7 @@ package com.amarthaloe.mod;
 
 import com.amarthaloe.mod.client.ClientFactionData;
 import com.amarthaloe.mod.client.FactionGuiOverlay;
+import com.amarthaloe.mod.client.RankBannerOverlay;
 import com.amarthaloe.mod.command.FactionCommands;
 import com.amarthaloe.mod.faction.Faction;
 import com.amarthaloe.mod.faction.FactionAttachments;
@@ -34,7 +35,8 @@ import java.util.Map;
 @Mod(AmarthaloeMod.MODID)
 public class AmarthaloeMod {
     public static final String MODID = "amarthaloe";
-    public static KeyMapping CYCLE_FACTION_KEY;
+    public static KeyMapping FACTION_PREV_KEY;
+    public static KeyMapping FACTION_NEXT_KEY;
 
     public AmarthaloeMod(IEventBus modEventBus) {
         FactionAttachments.register(modEventBus);
@@ -77,22 +79,36 @@ public class AmarthaloeMod {
     public static class ClientModEvents {
         @SubscribeEvent
         public static void registerGuiLayers(RegisterGuiLayersEvent event) {
+            // Верхняя постоянная плашка репутации
             event.registerAbove(
                     VanillaGuiLayers.HOTBAR,
                     ResourceLocation.fromNamespaceAndPath(MODID, "faction_overlay"),
                     new FactionGuiOverlay()
             );
+            // Большой WoW-баннер поверх интерфейса
+            event.registerAbove(
+                    VanillaGuiLayers.CHAT,
+                    ResourceLocation.fromNamespaceAndPath(MODID, "rank_banner_overlay"),
+                    new RankBannerOverlay()
+            );
         }
 
         @SubscribeEvent
         public static void registerKeys(RegisterKeyMappingsEvent event) {
-            CYCLE_FACTION_KEY = new KeyMapping(
-                    "key.amarthaloe.cycle_faction",
+            FACTION_PREV_KEY = new KeyMapping(
+                    "key.amarthaloe.prev_faction",
                     InputConstants.Type.KEYSYM,
-                    GLFW.GLFW_KEY_L,
+                    GLFW.GLFW_KEY_LEFT,
                     "key.categories.amarthaloe"
             );
-            event.register(CYCLE_FACTION_KEY);
+            FACTION_NEXT_KEY = new KeyMapping(
+                    "key.amarthaloe.next_faction",
+                    InputConstants.Type.KEYSYM,
+                    GLFW.GLFW_KEY_RIGHT,
+                    "key.categories.amarthaloe"
+            );
+            event.register(FACTION_PREV_KEY);
+            event.register(FACTION_NEXT_KEY);
         }
     }
 
@@ -100,8 +116,13 @@ public class AmarthaloeMod {
     public static class ClientGameEvents {
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Post event) {
-            if (CYCLE_FACTION_KEY != null && CYCLE_FACTION_KEY.consumeClick()) {
-                ClientFactionData.cycleFaction();
+            RankBannerOverlay.tick();
+
+            if (FACTION_PREV_KEY != null && FACTION_PREV_KEY.consumeClick()) {
+                ClientFactionData.cycleLeft();
+            }
+            if (FACTION_NEXT_KEY != null && FACTION_NEXT_KEY.consumeClick()) {
+                ClientFactionData.cycleRight();
             }
         }
     }
