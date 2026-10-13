@@ -58,16 +58,9 @@
           "biome_is": ["amarthaloe:isonomia"]
         },
         "then_run": {
-          "type": "minecraft:condition",
-          "if_true": {
-            "type": "minecraft:above_water_level",
-            "offset": 0
-          },
-          "then_run": {
-            "type": "minecraft:block",
-            "result_state": {
-              "Name": "minecraft:stone"
-            }
+          "type": "minecraft:block",
+          "result_state": {
+            "Name": "minecraft:stone"
           }
         }
       },
