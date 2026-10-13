@@ -71,9 +71,9 @@ public class RankBannerOverlay implements LayeredDraw.Layer {
 
         // Название фракции и новый титул
         Component title = Component.literal("")
-                .append(activeFaction.getFormattedName())
-                .append("§f: ")
-                .append(FactionRank.getTitle(activeFaction, activeRep));
+            .append(activeFaction.getFullLoreName())
+            .append("§f: ")
+            .append(FactionRank.getTitle(activeFaction, activeRep));
 
         int titleX = (screenWidth - font.width(title)) / 2;
         guiGraphics.drawString(font, title, titleX, y + 22, (aByte << 24) | 0xFFFFFF, true);
