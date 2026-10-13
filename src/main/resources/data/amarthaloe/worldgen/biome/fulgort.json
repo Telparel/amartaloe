@@ -12,9 +12,7 @@
   },
   "spawners": {},
   "spawn_costs": {},
-  "carvers": {
-    "air": ["minecraft:cave", "minecraft:canyon"]
-  },
+  "carvers": {},
   "features": [
     [],
     [],
@@ -24,7 +22,9 @@
     [],
     [],
     [],
-    [],
+    [
+      "minecraft:forest_rock"
+    ],
     [
       "minecraft:trees_windswept_hills",
       "minecraft:patch_grass_plain"
