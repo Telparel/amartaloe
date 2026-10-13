@@ -2,7 +2,7 @@
   "type": "amarthaloe:amarthaloe_type",
   "generator": {
     "type": "minecraft:noise",
-    "settings": "minecraft:overworld",
+    "settings": "amarthaloe:amarthaloe_noise",
     "biome_source": {
       "type": "amarthaloe:radial_biomes",
       "isonomia": "amarthaloe:isonomia",
