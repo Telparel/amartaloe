@@ -1,12 +1,6 @@
 {
   "type": "minecraft:jigsaw",
-  "biomes": [
-    "amarthaloe:caligo",
-    "amarthaloe:gnostera",
-    "amarthaloe:gladius",
-    "amarthaloe:fulgort",
-    "amarthaloe:adel"
-  ],
+  "biomes": "#amarthaloe:baron_biomes",
   "step": "surface_structures",
   "spawn_overrides": {},
   "terrain_adaptation": "beard_box",
