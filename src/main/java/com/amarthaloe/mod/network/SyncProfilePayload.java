@@ -2,6 +2,7 @@ package com.amarthaloe.mod.network;
 
 import com.amarthaloe.mod.AmarthaloeMod;
 import com.amarthaloe.mod.client.ClientProfileData;
+import com.amarthaloe.mod.profile.PlayerProfileData;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -21,6 +22,21 @@ public record SyncProfilePayload(
         String backstory,
         boolean isFirstJoin
 ) implements CustomPacketPayload {
+
+    public SyncProfilePayload(PlayerProfileData data) {
+        this(
+                data.getRpName(),
+                data.getGender() != null ? data.getGender().name() : "",
+                data.getSelectedTitle(),
+                data.getHeightWeight(),
+                data.getBuild(),
+                data.getHair(),
+                data.getEyes(),
+                data.getDistinctiveFeatures(),
+                data.getBackstory(),
+                data.isFirstJoin()
+        );
+    }
 
     public static final Type<SyncProfilePayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(AmarthaloeMod.MODID, "sync_profile"));
