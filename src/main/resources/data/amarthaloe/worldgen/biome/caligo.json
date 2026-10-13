@@ -1,6 +1,6 @@
 {
   "has_precipitation": true,
-  "temperature": -0.7,
+  "temperature": -0.8,
   "downfall": 0.9,
   "effects": {
     "sky_color": 7833750,
@@ -12,6 +12,27 @@
   },
   "spawners": {},
   "spawn_costs": {},
-  "carvers": {},
-  "features": []
+  "carvers": {
+    "air": ["minecraft:cave", "minecraft:canyon"]
+  },
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "minecraft:ice_spike",
+      "minecraft:ice_patch"
+    ],
+    [
+      "minecraft:trees_snowy"
+    ],
+    [
+      "minecraft:freeze_top_layer"
+    ]
+  ]
 }
