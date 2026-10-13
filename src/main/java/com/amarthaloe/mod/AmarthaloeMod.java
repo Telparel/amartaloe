@@ -1,15 +1,21 @@
 package com.amarthaloe.mod;
 
 import com.amarthaloe.mod.client.ClientFactionData;
+import com.amarthaloe.mod.client.ClientProfileData;
 import com.amarthaloe.mod.client.FactionGuiOverlay;
 import com.amarthaloe.mod.client.RankBannerOverlay;
+import com.amarthaloe.mod.client.gui.AmarthaloeMenuScreen;
 import com.amarthaloe.mod.command.FactionCommands;
 import com.amarthaloe.mod.faction.Faction;
 import com.amarthaloe.mod.faction.FactionAttachments;
 import com.amarthaloe.mod.faction.PlayerFactionData;
 import com.amarthaloe.mod.network.SyncFactionDataPayload;
+import com.amarthaloe.mod.network.SyncProfilePayload;
+import com.amarthaloe.mod.network.UpdateProfilePayload;
+import com.amarthaloe.mod.profile.PlayerProfileData;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
@@ -37,6 +43,7 @@ public class AmarthaloeMod {
     public static final String MODID = "amarthaloe";
     public static KeyMapping FACTION_PREV_KEY;
     public static KeyMapping FACTION_NEXT_KEY;
+    public static KeyMapping MENU_KEY;
 
     public AmarthaloeMod(IEventBus modEventBus) {
         FactionAttachments.register(modEventBus);
@@ -47,10 +54,25 @@ public class AmarthaloeMod {
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar("1");
+
+        // Пакеты репутации
         registrar.playToClient(
                 SyncFactionDataPayload.TYPE,
                 SyncFactionDataPayload.STREAM_CODEE,
                 SyncFactionDataPayload::handle
+        );
+
+        // Пакеты профиля
+        registrar.playToServer(
+                UpdateProfilePayload.TYPE,
+                UpdateProfilePayload.STREAM_CODEC,
+                UpdateProfilePayload::handle
+        );
+
+        registrar.playToClient(
+                SyncProfilePayload.TYPE,
+                SyncProfilePayload.STREAM_CODEC,
+                SyncProfilePayload::handle
         );
     }
 
@@ -63,6 +85,7 @@ public class AmarthaloeMod {
     public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             syncPlayer(player);
+            syncPlayerProfile(player);
         }
     }
 
@@ -75,17 +98,30 @@ public class AmarthaloeMod {
         PacketDistributor.sendToPlayer(player, new SyncFactionDataPayload(map));
     }
 
+    public static void syncPlayerProfile(ServerPlayer player) {
+        PlayerProfileData profile = player.getData(FactionAttachments.PROFILE_DATA);
+        PacketDistributor.sendToPlayer(player, new SyncProfilePayload(
+                profile.getRpName(),
+                profile.getGender().name(),
+                profile.getSelectedTitle(),
+                profile.getHeightWeight(),
+                profile.getBuild(),
+                profile.getHair(),
+                profile.getEyes(),
+                profile.getDistinctiveFeatures(),
+                profile.getBackstory()
+        ));
+    }
+
     @EventBusSubscriber(modid = MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
         @SubscribeEvent
         public static void registerGuiLayers(RegisterGuiLayersEvent event) {
-            // Верхняя постоянная плашка репутации
             event.registerAbove(
                     VanillaGuiLayers.HOTBAR,
                     ResourceLocation.fromNamespaceAndPath(MODID, "faction_overlay"),
                     new FactionGuiOverlay()
             );
-            // Большой WoW-баннер поверх интерфейса
             event.registerAbove(
                     VanillaGuiLayers.CHAT,
                     ResourceLocation.fromNamespaceAndPath(MODID, "rank_banner_overlay"),
@@ -107,8 +143,15 @@ public class AmarthaloeMod {
                     GLFW.GLFW_KEY_RIGHT,
                     "key.categories.amarthaloe"
             );
+            MENU_KEY = new KeyMapping(
+                    "key.amarthaloe.open_menu",
+                    InputConstants.Type.KEYSYM,
+                    GLFW.GLFW_KEY_M,
+                    "key.categories.amarthaloe"
+            );
             event.register(FACTION_PREV_KEY);
             event.register(FACTION_NEXT_KEY);
+            event.register(MENU_KEY);
         }
     }
 
@@ -123,6 +166,9 @@ public class AmarthaloeMod {
             }
             if (FACTION_NEXT_KEY != null && FACTION_NEXT_KEY.consumeClick()) {
                 ClientFactionData.cycleRight();
+            }
+            if (MENU_KEY != null && MENU_KEY.consumeClick()) {
+                Minecraft.getInstance().setScreen(new AmarthaloeMenuScreen());
             }
         }
     }
