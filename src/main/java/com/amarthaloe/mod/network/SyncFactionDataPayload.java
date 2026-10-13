@@ -17,7 +17,7 @@ public record SyncFactionDataPayload(Map<Faction, Integer> data) implements Cust
     public static final Type<SyncFactionDataPayload> TYPE = 
             new Type<>(ResourceLocation.fromNamespaceAndPath(AmarthaloeMod.MODID, "sync_faction_data"));
 
-    public static final StreamCodec<ByteBuf, SyncFactionDataPayload> STREAM_CODEE = StreamCodec.of(
+    public static final StreamCodec<ByteBuf, SyncFactionDataPayload> STREAM_CODEC = StreamCodec.of(
             (buf, payload) -> {
                 buf.writeInt(payload.data.size());
                 for (Map.Entry<Faction, Integer> entry : payload.data.entrySet()) {
