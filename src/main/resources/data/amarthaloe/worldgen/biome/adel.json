@@ -6,15 +6,11 @@
     "sky_color": 3297340,
     "fog_color": 2377770,
     "water_color": 3828300,
-    "water_fog_color": 1391650,
-    "grass_color": 3959860,
-    "foliage_color": 3037230
+    "water_fog_color": 1391650
   },
   "spawners": {},
   "spawn_costs": {},
-  "carvers": {
-    "air": ["minecraft:cave", "minecraft:canyon"]
-  },
+  "carvers": {},
   "features": [
     [],
     [],
