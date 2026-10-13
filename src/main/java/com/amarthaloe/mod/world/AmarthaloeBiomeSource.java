@@ -58,14 +58,14 @@ public class AmarthaloeBiomeSource extends BiomeSource {
         return Stream.of(isonomia, caligo, gnostera, gladius, maris, fulgort, adel);
     }
 
-    @Override
+   @Override
     public Holder<Biome> getNoiseBiome(int quartX, int quartY, int quartZ, Climate.Sampler sampler) {
         int blockX = quartX << 2;
         int blockZ = quartZ << 2;
 
-        // Волновой шум искривления границ (Domain Warping)
-        double warpX = Math.sin(blockZ * 0.003) * 180.0 + Math.cos(blockZ * 0.0008) * 320.0;
-        double warpZ = Math.cos(blockX * 0.003) * 180.0 + Math.sin(blockX * 0.0008) * 320.0;
+        // Мягкое искривление границ без разрушения пропорций
+        double warpX = Math.sin(blockZ * 0.002) * 120.0;
+        double warpZ = Math.cos(blockX * 0.002) * 120.0;
 
         double sampleX = blockX + warpX;
         double sampleZ = blockZ + warpZ;
@@ -78,19 +78,20 @@ public class AmarthaloeBiomeSource extends BiomeSource {
             return isonomia;
         }
 
-        // 2. Внешние 6 секторов (угол с шумом волны)
-        double angle = Math.atan2(sampleZ, sampleX);
-        if (angle < 0) angle += 2 * Math.PI;
+        // 2. Внешние регионы: 6 равных секторов по 60°
+        // Направление: Калиго строго на север (угол ~ -90° / 270°)
+        double angle = Math.toDegrees(Math.atan2(sampleZ, sampleX));
+        if (angle < 0) angle += 360.0;
 
-        int sector = (int) (angle / (Math.PI / 3.0)) % 6;
+        // Смещение на +30 градусов для центровки первого сектора
+        int sector = ((int) ((angle + 30.0) % 360.0)) / 60;
 
         return switch (sector) {
-            case 0 -> gladius;
-            case 1 -> maris;
-            case 2 -> fulgort;
-            case 3 -> adel;
-            case 4 -> gnostera;
-            default -> caligo;
+            case 0 -> gladius;   // Восток (+X)
+            case 1 -> maris;     // Юго-восток
+            case 2 -> fulgort;   // Юго-запад
+            case 3 -> adel;      // Запад (-X) — гарантированно существует!
+            case 4 -> gnostera;  // Северо-запад
+            default -> caligo;   // Север (-Z)
         };
     }
-}
