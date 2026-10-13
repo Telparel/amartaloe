@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "amarthaloe:baron_outpost",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 28,
+    "separation": 12,
+    "salt": 9482710
+  }
+}
