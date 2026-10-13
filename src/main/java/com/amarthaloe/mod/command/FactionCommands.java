@@ -1,5 +1,6 @@
 package com.amarthaloe.mod.command;
 
+import com.amarthaloe.mod.AmarthaloeMod;
 import com.amarthaloe.mod.faction.Faction;
 import com.amarthaloe.mod.faction.FactionAttachments;
 import com.amarthaloe.mod.faction.PlayerFactionData;
@@ -41,13 +42,15 @@ public class FactionCommands {
 
                                 Faction faction = Faction.fromId(factionId);
                                 if (faction == null) {
-                                    ctx.getSource().sendFailure(Component.literal("Фракция не найдена. Доступны: isonomia, caligo, gnostera, gladius, maris, fulgort, adel"));
+                                    ctx.getSource().sendFailure(Component.literal("Фракция не найдена."));
                                     return 0;
                                 }
 
                                 PlayerFactionData data = player.getData(FactionAttachments.FACTION_DATA);
                                 data.addReputation(faction, amount);
-                                ctx.getSource().sendSuccess(() -> Component.literal("Изменена репутация " + player.getName().getString() + " во фракции ").append(faction.getFormattedName()).append(" на " + amount), true);
+                                AmarthaloeMod.syncPlayer(player); // Мгновенное обновление GUI!
+
+                                ctx.getSource().sendSuccess(() -> Component.literal("Репутация обновлена."), true);
                                 return 1;
                             })
                         )
