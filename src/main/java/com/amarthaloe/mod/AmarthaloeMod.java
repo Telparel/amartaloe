@@ -15,6 +15,7 @@ import com.amarthaloe.mod.network.CompleteTutorialPayload;
 import com.amarthaloe.mod.network.SyncFactionDataPayload;
 import com.amarthaloe.mod.network.SyncPartyPayload;
 import com.amarthaloe.mod.network.SyncProfilePayload;
+import com.amarthaloe.mod.network.TeleportToSectorPayload;
 import com.amarthaloe.mod.network.UpdateProfilePayload;
 import com.amarthaloe.mod.party.PartyManager;
 import com.amarthaloe.mod.profile.PlayerProfileData;
@@ -100,6 +101,12 @@ public class AmarthaloeMod {
                 CompleteTutorialPayload.TYPE,
                 CompleteTutorialPayload.STREAM_CODEC,
                 CompleteTutorialPayload::handle
+        );
+
+        registrar.playToServer(
+                TeleportToSectorPayload.TYPE,
+                TeleportToSectorPayload.STREAM_CODEC,
+                TeleportToSectorPayload::handle
         );
     }
 
