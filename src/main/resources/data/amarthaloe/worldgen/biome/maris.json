@@ -12,9 +12,7 @@
   },
   "spawners": {},
   "spawn_costs": {},
-  "carvers": {
-    "air": ["minecraft:cave", "minecraft:canyon"]
-  },
+  "carvers": {},
   "features": [
     [],
     [],
