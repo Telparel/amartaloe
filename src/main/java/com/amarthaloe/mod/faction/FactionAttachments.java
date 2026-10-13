@@ -15,6 +15,7 @@ public class FactionAttachments {
     public static final Supplier<AttachmentType<PlayerFactionData>> FACTION_DATA =
             ATTACHMENT_TYPES.register("faction_data", () ->
                     AttachmentType.serializable(PlayerFactionData::new)
+                            .copyOnDeath()
                             .build()
             );
 
