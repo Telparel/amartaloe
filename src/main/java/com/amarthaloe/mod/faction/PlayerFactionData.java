@@ -1,13 +1,13 @@
 package com.amarthaloe.mod.faction;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.neoforged.neoforge.common.util.INBTSerializable;
 
 import java.util.EnumMap;
 import java.util.Map;
 
-public class PlayerFactionData {
+public class PlayerFactionData implements INBTSerializable<CompoundTag> {
     private final Map<Faction, Integer> alignments = new EnumMap<>(Faction.class);
 
     public PlayerFactionData() {
@@ -28,7 +28,8 @@ public class PlayerFactionData {
         setReputation(faction, getReputation(faction) + delta);
     }
 
-    public CompoundTag saveNBT() {
+    @Override
+    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
         CompoundTag tag = new CompoundTag();
         for (Faction f : Faction.values()) {
             tag.putInt(f.getId(), alignments.getOrDefault(f, 0));
@@ -36,13 +37,12 @@ public class PlayerFactionData {
         return tag;
     }
 
-    public static PlayerFactionData loadNBT(CompoundTag tag) {
-        PlayerFactionData data = new PlayerFactionData();
+    @Override
+    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag tag) {
         for (Faction f : Faction.values()) {
             if (tag.contains(f.getId())) {
-                data.setReputation(f, tag.getInt(f.getId()));
+                alignments.put(f, tag.getInt(f.getId()));
             }
         }
-        return data;
     }
 }
