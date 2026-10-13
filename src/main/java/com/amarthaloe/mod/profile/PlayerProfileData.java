@@ -23,10 +23,10 @@ public class PlayerProfileData implements INBTSerializable<CompoundTag> {
     private String eyes = "Карие";
     private String distinctiveFeatures = "Шрам через бровь";
     private String backstory = "Один из выживших на руинах старого мира...";
+    private boolean hasSeenTutorial = false;
 
     public PlayerProfileData() {}
 
-    // Геттеры и сеттеры
     public String getRpName() { return rpName; }
     public void setRpName(String rpName) { this.rpName = rpName; }
 
@@ -54,6 +54,9 @@ public class PlayerProfileData implements INBTSerializable<CompoundTag> {
     public String getBackstory() { return backstory; }
     public void setBackstory(String backstory) { this.backstory = backstory; }
 
+    public boolean hasSeenTutorial() { return hasSeenTutorial; }
+    public void setHasSeenTutorial(boolean hasSeenTutorial) { this.hasSeenTutorial = hasSeenTutorial; }
+
     @Override
     public CompoundTag serializeNBT(HolderLookup.Provider provider) {
         CompoundTag tag = new CompoundTag();
@@ -66,6 +69,7 @@ public class PlayerProfileData implements INBTSerializable<CompoundTag> {
         tag.putString("eyes", eyes);
         tag.putString("distinctiveFeatures", distinctiveFeatures);
         tag.putString("backstory", backstory);
+        tag.putBoolean("hasSeenTutorial", hasSeenTutorial);
         return tag;
     }
 
@@ -82,5 +86,6 @@ public class PlayerProfileData implements INBTSerializable<CompoundTag> {
         if (tag.contains("eyes")) eyes = tag.getString("eyes");
         if (tag.contains("distinctiveFeatures")) distinctiveFeatures = tag.getString("distinctiveFeatures");
         if (tag.contains("backstory")) backstory = tag.getString("backstory");
+        if (tag.contains("hasSeenTutorial")) hasSeenTutorial = tag.getBoolean("hasSeenTutorial");
     }
 }
