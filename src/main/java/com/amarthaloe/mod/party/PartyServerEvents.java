@@ -22,39 +22,31 @@ public class PartyServerEvents {
             return;
         }
 
-        // Проверяем наличие пати
-        var partyManager = PartyManager.get();
-        if (partyManager == null) {
-            return;
-        }
-
-        var party = partyManager.getParty(serverPlayer.getUUID());
-        if (party == null || party.isEmpty()) {
-            return;
-        }
-
-        // Ищем союзников в радиусе и в том же измерении
-        List<ServerPlayer> nearbyMembers = new ArrayList<>();
-        nearbyMembers.add(serverPlayer);
-
         var server = serverPlayer.getServer();
         if (server == null) {
             return;
         }
 
+        List<PartyMemberData> party = PartyManager.getParty(serverPlayer.getUUID(), server);
+        if (party == null || party.isEmpty()) {
+            return;
+        }
+
+        List<ServerPlayer> nearbyMembers = new ArrayList<>();
+        nearbyMembers.add(serverPlayer);
+
         for (PartyMemberData memberData : party) {
-            if (memberData.uuid().equals(serverPlayer.getUUID())) {
+            if (memberData.getUuid().equals(serverPlayer.getUUID())) {
                 continue;
             }
-            ServerPlayer member = server.getPlayerList().getPlayer(memberData.uuid());
-            if (member != null && member.isAlive() 
+            ServerPlayer member = server.getPlayerList().getPlayer(memberData.getUuid());
+            if (member != null && member.isAlive()
                     && member.level().dimension() == serverPlayer.level().dimension()
                     && member.distanceToSqr(serverPlayer) <= EXP_SHARE_RADIUS_SQ) {
                 nearbyMembers.add(member);
             }
         }
 
-        // Если союзников рядом нет — ванильный подбор
         if (nearbyMembers.size() <= 1) {
             return;
         }
@@ -64,17 +56,14 @@ public class PartyServerEvents {
             return;
         }
 
-        // Бонус +15% за каждого дополнительного союзника
         double bonusMultiplier = 1.0 + (nearbyMembers.size() - 1) * 0.15;
         int totalXp = (int) Math.round(originalXp * bonusMultiplier);
         int sharedXp = Math.max(1, totalXp / nearbyMembers.size());
 
-        // Распределяем опыт между всеми участниками рядом
         for (ServerPlayer member : nearbyMembers) {
             member.giveExperiencePoints(sharedXp);
         }
 
-        // Отменяем стандартное начисление игроку (сферу удаляем вручную)
         event.getOrb().discard();
         event.setCanceled(true);
     }
