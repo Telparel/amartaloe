@@ -34,7 +34,7 @@ public record SyncProfilePayload(
                 data.getEyes(),
                 data.getDistinctiveFeatures(),
                 data.getBackstory(),
-                data.isFirstJoin()
+                data.firstJoin
         );
     }
 
