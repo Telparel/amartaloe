@@ -40,7 +40,6 @@ public class AmarthaloeMenuScreen extends Screen {
     private final int imageWidth = 240;
     private final int imageHeight = 170;
 
-    // Кнопки переключения фракций
     private Button prevFactionBtn;
     private Button nextFactionBtn;
 
@@ -100,7 +99,7 @@ public class AmarthaloeMenuScreen extends Screen {
             this.addRenderableWidget(this.nextFactionBtn);
         }
 
-        // 3. Нижняя кнопка закрытия
+        // 3. Кнопка закрытия
         this.addRenderableWidget(Button.builder(Component.literal("Закрыть"), b -> this.onClose())
                 .bounds(this.leftPos + (this.imageWidth - 80) / 2, this.topPos + this.imageHeight - 24, 80, 20)
                 .build());
@@ -114,7 +113,6 @@ public class AmarthaloeMenuScreen extends Screen {
         guiGraphics.fill(this.leftPos - 1, this.topPos - 1, this.leftPos + this.imageWidth + 1, this.topPos + this.imageHeight + 1, 0xFF141210);
         guiGraphics.fill(this.leftPos, this.topPos, this.leftPos + this.imageWidth, this.topPos + this.imageHeight, 0xEE1A1715);
 
-        // Отрисовка контента активной вкладки
         switch (this.currentTab) {
             case PROFILE -> renderProfileTab(guiGraphics);
             case FACTIONS -> renderFactionsTab(guiGraphics);
@@ -135,7 +133,8 @@ public class AmarthaloeMenuScreen extends Screen {
         g.drawString(this.font, "§7Имя: §f" + name, contentX, contentY, 0xFFFFFF, false);
         contentY += 12;
 
-        g.drawString(this.font, "§7Пол: §f" + ClientProfileData.gender, contentX, contentY, 0xFFFFFF, false);
+        String genderDisplay = ClientProfileData.gender != null ? ClientProfileData.gender.getDisplay() : "Мужской";
+        g.drawString(this.font, "§7Пол: §f" + genderDisplay, contentX, contentY, 0xFFFFFF, false);
         contentY += 12;
 
         if (!ClientProfileData.selectedTitle.isEmpty()) {
@@ -172,24 +171,20 @@ public class AmarthaloeMenuScreen extends Screen {
         int centerX = this.leftPos + this.imageWidth / 2;
         int contentY = this.topPos + 22;
 
-        // Название текущей фракции с титулом Барона
         Component loreName = currentFaction.getFullLoreName();
         g.drawString(this.font, loreName, centerX - this.font.width(loreName) / 2, contentY, 0xFFFFFF, false);
         contentY += 24;
 
-        // Репутация и ранг с учётом пола персонажа
         int rep = ClientFactionData.getReputation(currentFaction);
-        PlayerProfileData.Gender gender = PlayerProfileData.Gender.MALE;
-        if ("FEMALE".equalsIgnoreCase(ClientProfileData.gender) || "Женский".equalsIgnoreCase(ClientProfileData.gender)) {
-            gender = PlayerProfileData.Gender.FEMALE;
-        }
+        PlayerProfileData.Gender gender = ClientProfileData.gender != null 
+                ? ClientProfileData.gender 
+                : PlayerProfileData.Gender.MALE;
         Component rankComponent = FactionRank.getTitle(currentFaction, rep, gender);
 
         Component repComponent = Component.literal("§7Репутация: §f" + rep + " §8| §7Ранг: ").append(rankComponent);
         g.drawString(this.font, repComponent, centerX - this.font.width(repComponent) / 2, contentY, 0xFFFFFF, false);
         contentY += 18;
 
-        // Полоса прогресса репутации
         int barWidth = 140;
         int barHeight = 6;
         int barX = centerX - barWidth / 2;
@@ -209,7 +204,6 @@ public class AmarthaloeMenuScreen extends Screen {
         }
         contentY += 16;
 
-        // Подзаголовок покровителя
         String patronText = "§8Покровитель сектора: §7" + currentFaction.getBaronTitle();
         g.drawString(this.font, patronText, centerX - this.font.width(patronText) / 2, contentY, 0xFFFFFF, false);
     }
