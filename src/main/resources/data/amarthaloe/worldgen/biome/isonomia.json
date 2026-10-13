@@ -3,18 +3,14 @@
   "temperature": 0.5,
   "downfall": 0.0,
   "effects": {
-    "sky_color": 3355443,
-    "fog_color": 2236962,
+    "sky_color": 2236962,
+    "fog_color": 1447446,
     "water_color": 4473924,
-    "water_fog_color": 2236962,
-    "grass_color": 5592405,
-    "foliage_color": 5592405
+    "water_fog_color": 2236962
   },
   "spawners": {},
   "spawn_costs": {},
-  "carvers": {
-    "air": ["minecraft:cave", "minecraft:cave_extra_underground", "minecraft:canyon"]
-  },
+  "carvers": {},
   "features": [
     [],
     [],
@@ -26,8 +22,7 @@
     [],
     [],
     [
-      "minecraft:patch_dead_bush",
-      "minecraft:patch_grass_plain"
+      "minecraft:patch_dead_bush"
     ],
     []
   ]
