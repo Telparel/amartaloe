@@ -32,7 +32,7 @@ import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -42,7 +42,6 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.UUID;
 
 @Mod(AmarthaloeMod.MODID)
 public class AmarthaloeMod {
@@ -92,9 +91,9 @@ public class AmarthaloeMod {
         PartyCommands.register(event.getDispatcher());
     }
 
-    // Запрет нанесения урона между сопартийцами (No Friendly Fire)
+    // Запрет Friendly Fire между сопартийцами
     @SubscribeEvent
-    public void onLivingDamage(LivingDamageEvent.Pre event) {
+    public void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
         if (event.getEntity() instanceof ServerPlayer victim) {
             if (event.getSource().getEntity() instanceof ServerPlayer attacker) {
                 if (PartyManager.areInSameParty(victim.getUUID(), attacker.getUUID())) {
@@ -104,13 +103,12 @@ public class AmarthaloeMod {
         }
     }
 
-    // Регулярная синхронизация здоровья и сытости союзников
     @SubscribeEvent
     public void onPlayerTick(PlayerTickEvent.Post event) {
         if (event.getEntity() instanceof ServerPlayer player && player.tickCount % 20 == 0) {
             var party = PartyManager.getPartyMembers(player.getUUID());
             if (!party.isEmpty()) {
-                PartyManager.syncParty(player.server, PartyManager.getPartyMembers(player.getUUID()).get(0));
+                PartyManager.syncParty(player.server, party.get(0));
             }
         }
     }
