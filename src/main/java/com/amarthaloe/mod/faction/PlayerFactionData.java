@@ -4,6 +4,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.neoforged.neoforge.common.util.INBTSerializable;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -14,6 +15,10 @@ public class PlayerFactionData implements INBTSerializable<CompoundTag> {
         for (Faction f : Faction.values()) {
             alignments.put(f, 0);
         }
+    }
+
+    public Map<Faction, Integer> getAlignments() {
+        return Collections.unmodifiableMap(alignments);
     }
 
     public int getReputation(Faction faction) {
