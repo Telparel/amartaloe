@@ -87,10 +87,10 @@ public class FactionGuiOverlay implements LayeredDraw.Layer {
         int rightTrackX = crestX + 18;
 
         guiGraphics.fill(leftTrackX, trackY, leftTrackX + trackW, trackY + trackH, 0xFF141518);
-        guiGraphics.renderOutline(leftTrackX, trackY, leftTrackW, trackH, 0xFF2C2F36);
+        guiGraphics.renderOutline(leftTrackX, trackY, trackW, trackH, 0xFF2C2F36);
 
         guiGraphics.fill(rightTrackX, trackY, rightTrackX + trackW, trackY + trackH, 0xFF141518);
-        guiGraphics.renderOutline(rightTrackX, trackY, rightTrackW, trackH, 0xFF2C2F36);
+        guiGraphics.renderOutline(rightTrackX, trackY, trackW, trackH, 0xFF2C2F36);
 
         int totalWidth = trackW * 2;
         int fillTotal = (int) (totalWidth * displayedProgress);
