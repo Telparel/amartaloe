@@ -6,19 +6,34 @@ import com.amarthaloe.mod.faction.FactionAttachments;
 import com.amarthaloe.mod.faction.FactionRank;
 import com.amarthaloe.mod.faction.PlayerFactionData;
 import com.amarthaloe.mod.profile.PlayerProfileData;
+import com.amarthaloe.mod.world.AmarthaloeWorld;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 public class FactionCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("amarthaloe")
+            .then(Commands.literal("tp")
+                .requires(source -> source.hasPermission(2))
+                .executes(ctx -> {
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    ServerLevel targetLevel = player.server.getLevel(AmarthaloeWorld.AMARTHALOE_LEVEL);
+                    if (targetLevel == null) {
+                        ctx.getSource().sendFailure(Component.literal("§cМир Амарталоэ не найден!"));
+                        return 0;
+                    }
+                    player.teleportTo(targetLevel, 0.5, 70.0, 0.5, player.getYRot(), player.getXRot());
+                    ctx.getSource().sendSuccess(() -> Component.literal("§aВы перенеслись в сердце Амарталоэ — Исономию."), true);
+                    return 1;
+                })
+            )
             .then(Commands.literal("check")
                 .executes(ctx -> {
                     ServerPlayer player = ctx.getSource().getPlayerOrException();
