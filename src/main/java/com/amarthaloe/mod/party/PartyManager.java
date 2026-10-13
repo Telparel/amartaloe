@@ -1,154 +1,179 @@
 package com.amarthaloe.mod.party;
 
-import com.amarthaloe.mod.AmarthaloeMod;
-import com.amarthaloe.mod.faction.FactionAttachments;
 import com.amarthaloe.mod.network.SyncPartyPayload;
-import com.amarthaloe.mod.profile.PlayerProfileData;
-import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PartyManager {
-    public static final int MAX_PARTY_MEMBERS = 5;
 
-    // UUID игрока -> UUID группы
-    private static final Map<UUID, UUID> playerParties = new HashMap<>();
-    // UUID группы -> список UUID участников (первый - лидер)
-    private static final Map<UUID, List<UUID>> parties = new HashMap<>();
-    // UUID приглашаемого -> UUID пригласившего игрока
-    private static final Map<UUID, UUID> pendingInvites = new HashMap<>();
+    private static final PartyManager INSTANCE = new PartyManager();
 
-    public static boolean areInSameParty(UUID u1, UUID u2) {
-        if (u1.equals(u2)) return false;
-        UUID p1 = playerParties.get(u1);
-        UUID p2 = playerParties.get(u2);
-        return p1 != null && p1.equals(p2);
+    // Карта: UUID игрока -> Список UUID всех участников группы
+    private final Map<UUID, Set<UUID>> playerParties = new ConcurrentHashMap<>();
+    // Карта приглашений: UUID приглашённого -> UUID пригласившего
+    private final Map<UUID, UUID> pendingInvites = new ConcurrentHashMap<>();
+    // Таймеры приглашений в тиках
+    private final Map<UUID, Integer> inviteTimers = new ConcurrentHashMap<>();
+
+    private PartyManager() {
     }
 
-    public static void invitePlayer(ServerPlayer leader, ServerPlayer target) {
-        if (leader.getUUID().equals(target.getUUID())) {
-            leader.sendSystemMessage(Component.literal("§cНельзя пригласить самого себя!"));
-            return;
-        }
-
-        UUID partyId = playerParties.get(leader.getUUID());
-        if (partyId != null && parties.get(partyId).size() >= MAX_PARTY_MEMBERS) {
-            leader.sendSystemMessage(Component.literal("§cГруппа уже заполнена (максимум " + MAX_PARTY_MEMBERS + " человек)!"));
-            return;
-        }
-
-        if (playerParties.containsKey(target.getUUID())) {
-            leader.sendSystemMessage(Component.literal("§cЭтот игрок уже состоит в группе!"));
-            return;
-        }
-
-        pendingInvites.put(target.getUUID(), leader.getUUID());
-        leader.sendSystemMessage(Component.literal("§aПриглашение отправлено игроку §e" + target.getName().getString()));
-        target.sendSystemMessage(Component.literal("§6" + leader.getName().getString() + " §aприглашает вас в группу! Введите §e/party accept§a."));
+    public static PartyManager get() {
+        return INSTANCE;
     }
 
-    public static void acceptInvite(ServerPlayer target) {
-        UUID leaderUuid = pendingInvites.remove(target.getUUID());
-        if (leaderUuid == null) {
-            target.sendSystemMessage(Component.literal("§cУ вас нет активных приглашений в группу!"));
-            return;
-        }
+    /**
+     * Создание DTO данных участника для отправки клиенту
+     */
+    public PartyMemberData createMemberData(ServerPlayer player) {
+        boolean hasDebuffs = player.getActiveEffects().stream()
+                .anyMatch(effect -> !effect.getEffect().value().isBeneficial());
 
-        ServerPlayer leader = target.server.getPlayerList().getPlayer(leaderUuid);
-        if (leader == null) {
-            target.sendSystemMessage(Component.literal("§cЛидер группы не в сети!"));
-            return;
-        }
+        String dimensionKey = player.level().dimension().location().getPath();
 
-        UUID partyId = playerParties.get(leaderUuid);
-        if (partyId == null) {
-            // Создаем новую группу
-            partyId = UUID.randomUUID();
-            parties.put(partyId, new ArrayList<>(List.of(leaderUuid)));
-            playerParties.put(leaderUuid, partyId);
-        }
-
-        List<UUID> members = parties.get(partyId);
-        if (members.size() >= MAX_PARTY_MEMBERS) {
-            target.sendSystemMessage(Component.literal("§cВ группе больше нет свободных мест!"));
-            return;
-        }
-
-        members.add(target.getUUID());
-        playerParties.put(target.getUUID(), partyId);
-
-        broadcastPartyMessage(target.server, partyId, "§e" + target.getName().getString() + " §aприсоединился к группе!");
-        syncParty(target.server, partyId);
+        return new PartyMemberData(
+                player.getUUID(),
+                player.getName().getString(),
+                player.getHealth(),
+                player.getMaxHealth(),
+                hasDebuffs,
+                dimensionKey
+        );
     }
 
-    public static void leaveParty(ServerPlayer player) {
-        UUID partyId = playerParties.remove(player.getUUID());
-        if (partyId == null) {
-            player.sendSystemMessage(Component.literal("§cВы не состоите в группе!"));
+    /**
+     * Получить список участников группы в виде DTO для игрока
+     */
+    public List<PartyMemberData> getParty(UUID playerUuid) {
+        Set<UUID> memberUuids = playerParties.get(playerUuid);
+        if (memberUuids == null || memberUuids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<PartyMemberData> result = new ArrayList<>();
+        MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server == null) {
+            return Collections.emptyList();
+        }
+
+        for (UUID uuid : memberUuids) {
+            ServerPlayer member = server.getPlayerList().getPlayer(uuid);
+            if (member != null) {
+                result.add(createMemberData(member));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Синхронизация группы со всеми её участниками по сети
+     */
+    public void syncParty(UUID anyMemberUuid) {
+        Set<UUID> memberUuids = playerParties.get(anyMemberUuid);
+        if (memberUuids == null) {
             return;
         }
 
-        List<UUID> members = parties.get(partyId);
-        if (members != null) {
-            members.remove(player.getUUID());
-            // Отправляем пустой список покинувшему игроку
-            PacketDistributor.sendToPlayer(player, new SyncPartyPayload(Collections.emptyList()));
+        List<PartyMemberData> membersData = getParty(anyMemberUuid);
+        MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server == null) {
+            return;
+        }
 
-            if (members.isEmpty()) {
-                parties.remove(partyId);
+        SyncPartyPayload payload = new SyncPartyPayload(membersData);
+        for (UUID uuid : memberUuids) {
+            ServerPlayer player = server.getPlayerList().getPlayer(uuid);
+            if (player != null) {
+                PacketDistributor.sendToPlayer(player, payload);
+            }
+        }
+    }
+
+    /**
+     * Создать группу или добавить игрока
+     */
+    public void addPlayerToParty(UUID inviterUuid, UUID invitedUuid) {
+        Set<UUID> party = playerParties.computeIfAbsent(inviterUuid, k -> ConcurrentHashMap.newKeySet());
+        party.add(inviterUuid);
+        party.add(invitedUuid);
+
+        // Связываем пати со всеми участниками
+        for (UUID member : party) {
+            playerParties.put(member, party);
+        }
+
+        pendingInvites.remove(invitedUuid);
+        inviteTimers.remove(invitedUuid);
+
+        syncParty(inviterUuid);
+    }
+
+    /**
+     * Удалить игрока из группы
+     */
+    public void removePlayerFromParty(UUID playerUuid) {
+        Set<UUID> party = playerParties.remove(playerUuid);
+        if (party != null) {
+            party.remove(playerUuid);
+
+            // Отправляем пустое пати вышедшему игроку
+            MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server != null) {
+                ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
+                if (player != null) {
+                    PacketDistributor.sendToPlayer(player, new SyncPartyPayload(Collections.emptyList()));
+                }
+            }
+
+            if (party.size() <= 1) {
+                // Если остался один — распускаем
+                for (UUID remaining : party) {
+                    playerParties.remove(remaining);
+                    if (server != null) {
+                        ServerPlayer remainingPlayer = server.getPlayerList().getPlayer(remaining);
+                        if (remainingPlayer != null) {
+                            PacketDistributor.sendToPlayer(remainingPlayer, new SyncPartyPayload(Collections.emptyList()));
+                        }
+                    }
+                }
             } else {
-                broadcastPartyMessage(player.server, partyId, "§c" + player.getName().getString() + " покинул группу.");
-                syncParty(player.server, partyId);
+                syncParty(party.iterator().next());
             }
         }
     }
 
-    public static void syncParty(net.minecraft.server.MinecraftServer server, UUID partyId) {
-        List<UUID> members = parties.get(partyId);
-        if (members == null) return;
-
-        List<PartyMemberData> memberDataList = new ArrayList<>();
-        for (UUID u : members) {
-            ServerPlayer sp = server.getPlayerList().getPlayer(u);
-            if (sp != null) {
-                PlayerProfileData prof = sp.getData(FactionAttachments.PROFILE_DATA);
-                String display = prof.getRpName().isBlank() ? sp.getName().getString() : prof.getRpName();
-                memberDataList.add(new PartyMemberData(
-                        sp.getUUID(),
-                        display,
-                        prof.getSelectedTitle(),
-                        sp.getHealth(),
-                        sp.getMaxHealth(),
-                        sp.getFoodData().getFoodLevel()
-                ));
-            }
-        }
-
-        SyncPartyPayload payload = new SyncPartyPayload(memberDataList);
-        for (UUID u : members) {
-            ServerPlayer sp = server.getPlayerList().getPlayer(u);
-            if (sp != null) {
-                PacketDistributor.sendToPlayer(sp, payload);
-            }
-        }
+    /**
+     * Отправка инвайта
+     */
+    public void sendInvite(UUID from, UUID to) {
+        pendingInvites.put(to, from);
+        inviteTimers.put(to, 600); // 30 секунд (600 тиков)
     }
 
-    private static void broadcastPartyMessage(net.minecraft.server.MinecraftServer server, UUID partyId, String message) {
-        List<UUID> members = parties.get(partyId);
-        if (members == null) return;
-        for (UUID u : members) {
-            ServerPlayer sp = server.getPlayerList().getPlayer(u);
-            if (sp != null) {
-                sp.sendSystemMessage(Component.literal("§6[Пати] " + message));
-            }
-        }
+    public UUID getPendingInvite(UUID playerUuid) {
+        return pendingInvites.get(playerUuid);
     }
 
-    public static List<UUID> getPartyMembers(UUID playerUuid) {
-        UUID partyId = playerParties.get(playerUuid);
-        if (partyId == null) return Collections.emptyList();
-        return parties.getOrDefault(partyId, Collections.emptyList());
+    /**
+     * Серверный тик: очистка просроченных приглашений и фоновая синхронизация HP/дебаффов
+     */
+    public void tick() {
+        if (!inviteTimers.isEmpty()) {
+            Iterator<Map.Entry<UUID, Integer>> it = inviteTimers.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<UUID, Integer> entry = it.next();
+                int timeLeft = entry.getValue() - 1;
+                if (timeLeft <= 0) {
+                    pendingInvites.remove(entry.getKey());
+                    it.remove();
+                } else {
+                    entry.setValue(timeLeft);
+                }
+            }
+        }
     }
 }
