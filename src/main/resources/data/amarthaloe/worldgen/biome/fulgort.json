@@ -24,8 +24,16 @@
   "carvers": {},
   "features": [
     [], [], [], [], [], [], [], [],
-    [ "minecraft:forest_rock" ],
-    [ "minecraft:trees_windswept_hills", "minecraft:patch_grass_plain" ],
-    [ "minecraft:freeze_top_layer" ]
+    [
+      "minecraft:forest_rock",
+      "amarthaloe:fulgort_crystal"
+    ],
+    [
+      "minecraft:trees_windswept_hills",
+      "minecraft:patch_grass_plain"
+    ],
+    [
+      "minecraft:freeze_top_layer"
+    ]
   ]
 }
