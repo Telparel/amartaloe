@@ -47,7 +47,7 @@ public class AmarthaloeMod {
     public static final String MODID = "amarthaloe";
 
     public AmarthaloeMod(IEventBus modEventBus) {
-        FactionAttachments.ATTACHMENT_TYPES.register(modEventBus);
+        FactionAttachments.register(modEventBus);
 
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::registerPayloads);
@@ -64,7 +64,7 @@ public class AmarthaloeMod {
 
         registrar.playToClient(
                 SyncFactionDataPayload.TYPE,
-                SyncFactionDataPayload.CODEC,
+                SyncFactionDataPayload.STREAM_CODEC,
                 SyncFactionDataPayload::handle
         );
         registrar.playToClient(
@@ -96,12 +96,12 @@ public class AmarthaloeMod {
     }
 
     public static void syncPlayer(ServerPlayer player) {
-        var factionData = player.getData(FactionAttachments.PLAYER_FACTION);
-        PacketDistributor.sendToPlayer(player, new SyncFactionDataPayload(factionData));
+        var factionData = player.getData(FactionAttachments.FACTION_DATA);
+        PacketDistributor.sendToPlayer(player, new SyncFactionDataPayload(factionData.getAllReputations()));
     }
 
     public static void syncPlayerProfile(ServerPlayer player) {
-        var profileData = player.getData(FactionAttachments.PLAYER_PROFILE);
+        var profileData = player.getData(FactionAttachments.PROFILE_DATA);
         PacketDistributor.sendToPlayer(player, new SyncProfilePayload(profileData));
     }
 
